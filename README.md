@@ -104,13 +104,7 @@ And each place gives them something to do. At the campfire, the marshmallow catc
 /plugin install painted-pixels@painted-pixels
 ```
 
-**With any agent that reads skills:**
-
-```bash
-npx skills add rader-ai/painted-pixels
-```
-
-**By hand,** clone it into your skills folder:
+**By hand,** clone it into your skills folder. That's where Claude Code looks, and another agent that reads skills will have a folder of its own:
 
 ```bash
 git clone https://github.com/rader-ai/painted-pixels ~/.claude/skills/painted-pixels
