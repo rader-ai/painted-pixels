@@ -53,6 +53,19 @@ clip hair 0010 --place garden --who girl --at 2 --act hair --seconds 3.8 --loop 
 clip stretch 0020 --place garden --who guy --at 2 --act stretch --seconds 4.2 --loop 4 --crop hero --zoom 2
 clip cough 0010 --place garden --who guy --at 2 --act cough --seconds 2.6 --loop 4 --crop hero --zoom 2
 
+# the referee's own status screens: the forest on the day it got a scene of its own, and the forest now
+if [ "$ONLY" = "  " ] || [[ "$ONLY" == *" status "* ]]; then
+  git -C "$(dirname "$PAGE")" show f152449:index.html > "$TMP/then.html"
+  node ../scripts/validate.mjs --page "$TMP/then.html" --place forest --quick --seconds 16 --out "$TMP/then" >/dev/null || true
+  node ../scripts/validate.mjs --page "$PAGE" --place forest --out "$TMP/now" >/dev/null || true
+  magick "$TMP/then/status.png" -strip -define webp:lossless=true "$OUT/status-then.webp"
+  magick "$TMP/now/status.png" -strip -define webp:lossless=true "$OUT/status-now.webp"
+  # what it saved when it caught a cloud appearing from nothing, on the version before that was fixed
+  git -C "$(dirname "$PAGE")" show 51503c3:index.html > "$TMP/starved.html"
+  node ../scripts/validate.mjs --page "$TMP/starved.html" --place garden --out "$TMP/starved" >/dev/null || true
+  if [ -f "$TMP/starved/jump-1.png" ]; then magick "$TMP/starved/jump-1.png" -strip -define webp:lossless=true "$OUT/jump-cloud.webp"; fi
+fi
+
 # the whole beach, for the before and after
 if [ "$ONLY" = "  " ]; then node ../scripts/look.mjs shot --page "$PAGE" --seed 2026 --place beach --at 57 --zoom 2 --out "$OUT/after-beach.png" >/dev/null; fi
 

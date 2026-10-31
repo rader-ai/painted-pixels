@@ -21,6 +21,7 @@ const ICONS = {
   talk: icon([[0, 0, 8, 5], [1, 5, 2, 1], [1, 6, 1, 1], [2, 2, 1, 1, 'gv'], [4, 2, 1, 1, 'gv'], [6, 2, 1, 1, 'gv']]),
   book: icon([[0, 1, 3, 6], [5, 1, 3, 6], [3, 2, 2, 5, 'acc'], [1, 3, 1, 1, 'gv'], [1, 5, 1, 1, 'gv'], [6, 3, 1, 1, 'gv'], [6, 5, 1, 1, 'gv']]),
   play: icon([[0, 0, 2, 8], [2, 1, 2, 6], [4, 2, 2, 4], [6, 3, 2, 2]]),
+  shield: icon([[0, 0, 8, 4], [1, 4, 6, 2], [2, 6, 4, 1], [3, 7, 2, 1], [3, 1, 2, 4, 'acc'], [2, 2, 4, 1, 'acc']]),
 };
 
 await page.setContent(`<!doctype html><html><head><meta charset="utf-8">
@@ -56,6 +57,7 @@ const PLATES = [
   ['light', 'sun', 'Light comes from somewhere'],
   ['lives', 'cloud', 'Everything has a life of its own'],
   ['people', 'person', 'People, not sprites'],
+  ['rules', 'shield', 'A rule book and a referee'],
   ['get', 'arrow', 'Get it'],
   ['ask', 'talk', 'Then just ask'],
   ['guides', 'book', 'A guide for every element'],

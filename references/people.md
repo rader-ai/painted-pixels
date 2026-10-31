@@ -4,7 +4,7 @@
 
 Look at `../assets/gallery/people-poses.png`, `people-walk.png` and `people-life.png`.
 
-They're tiny. On a big phone, a person is about 16×25 points on the screen, so **every gesture has to read through the silhouette**. A hand moving across the chest disappears. A hand going above the head, a head tipping back, a jaw dropping: those all read. Always check at real size (`look.mjs phone`).
+They're tiny. On a big phone, a person is about 25 points tall, so **every gesture has to read through the silhouette**. A hand moving across the chest disappears. A hand going above the head, a head tipping back, a jaw dropping: those all read. Always check at real size (`look.mjs phone`).
 
 ## How a person is put together
 
@@ -72,7 +72,7 @@ Earlier, a two-frame walk with a sliding foot read as a stiff shuffle. `look.mjs
 - **Breath:** one pixel of chest, about 15 a minute.
 - **Blink:** at random, and sometimes twice in a row.
 - **Head drift:** a few degrees, every few seconds.
-- **An action** every 6 to 13 seconds, with a slightly different speed each time.
+- **An action** after a pause of 6 to 13 seconds, with a slightly different speed each time.
 
 They work through every action once, in a new order, before anything comes round again. The first thing they ever do is turn and wink at you. On arriving somewhere they do something that place calls for, and about half the time after that too.
 

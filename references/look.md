@@ -15,7 +15,7 @@ Look at `../assets/gallery/tree-crowns.png` and `../assets/gallery/light-park.pn
 
 Decide this before any detail, because detail can't fix it.
 
-**Put the subject against the cleanest contrast in the frame.** Whoever's sitting there is 15×26 points on a phone. Their silhouette has to land on something plain and light, or plain and dark, and never on something busy. We've painted the same rooftop twice. One sat the person on a ledge, in the middle, with their head against the brightest part of the city's glow; its author lowered the horizon and added a dark park behind them to clear the way. You find them in a second. The other was a much stronger idea, with real height and an avenue falling away under their feet, but it had them at the edge against busy city, and the whole picture took longer to read.
+**Put the subject against the cleanest contrast in the frame.** Whoever's sitting there is about 25 points tall on a phone. Their silhouette has to land on something plain and light, or plain and dark, and never on something busy. We've painted the same rooftop twice. One sat the person on a ledge, in the middle, with their head against the brightest part of the city's glow; its author lowered the horizon and added a dark park behind them to clear the way. You find them in a second. The other was a much stronger idea, with real height and an avenue falling away under their feet, but it had them at the edge against busy city, and the whole picture took longer to read.
 
 **Big shapes first.** Block the frame as 3 to 5 flat masses, light against dark: sky, far, middle, near. Look at that at phone size. If it doesn't read as a place now, no amount of detail will make it read later.
 

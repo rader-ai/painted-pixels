@@ -100,6 +100,49 @@ And each place gives them something to do.
 
 <br>
 
+<h2><img src="docs/media/plate-rules.png" width="100%" alt="A rule book and a referee"></h2>
+
+The style is written down, so nobody has to guess at it. [The style guide](references/style.md) says what it is and isn't, with the real numbers from all eight worlds. [The rule book](references/rules.md) has 44 rules. A **Law** can't be broken. A **Custom** can, if you say which one and why.
+
+<img src="assets/gallery/style-do-dont.png" width="100%" alt="Five pairs from Lofi Studio's own history, not this and this: clouds with thickness that changes rather than a pile of balls, trees of many small lit parts rather than balls on a stick, one fire rather than a comb of flames, a shore with a wave's whole life rather than a line, and worn ground rather than a ruled edge">
+
+Then **a referee** checks the work. `scripts/validate.mjs` runs the scene in a muted browser, on a clock it steps by hand, and measures whatever can be measured: whether anything's blurred, whether the colours shift along their ramps, whether the person bounces to the beat, whether something appears out of nowhere, whether every rare sight ends by itself, and whether a cache grows until the page goes blank. That's 27 of the rules. The other 17 take judgement, like whether every bright side faces the moon, so it hands those back as a list to walk, with a sheet of what to look at. Rank S takes both.
+
+The forest on the day it got a scene of its own, and the forest now:
+
+<img src="docs/media/status-then.webp" width="100%" alt="A status screen headed Quest Report, Forest: a flat early scene, stat bars with several failures, a list of gremlins including nobody bounces to the beat, and Rank D">
+
+<img src="docs/media/status-now.webp" width="100%" alt="The same status screen for the forest now: a deep scene with a moon and a campfire, full stat bars, no gremlins, and Rank A">
+
+**The limits come from our own history.** Every old version of Lofi Studio still runs, so the referee was pointed at each one. What people complained about mostly fails, and what's there now passes.
+
+| What people said | What the referee finds in that version |
+|---|---|
+| "i was hoping for this style vs our traditional pixels" | 41 to 87 colours in a frame, and flat patches over as much as 93% of it |
+| "the character bounces a lot in every scene" | A beat moves up to 418 pixels around them, in most of the worlds |
+| "i was hoping for subtle motion and feeling of being alive" | Nobody's on a life clock, in any world |
+| "the lights turning off and on in the castle seem too fast" | A beat changes 3.5% of the castle |
+| "I'm big on the lighting too" | The light isn't written down anywhere |
+| "the trees just look like balls" | Nothing. That's what the Eye rules are for |
+
+The [whole table](references/validation.md#why-these-numbers) is in the guide.
+
+It found bugs that had shipped, too. A fishing rod at fractions of a pixel. Lamps in the coffee shop pulsing with the beat. Someone who kept walking for people who'd asked for less motion. A black cat that could stay on the castle wall for minutes. And when it caught clouds appearing from nothing, on an old version, it saved the frame before and the frame after:
+
+<img src="docs/media/jump-cloud.webp" width="100%" alt="Two frames of a garden, one above the other, a twentieth of a second apart. In the second, a huge cloud has appeared in front of the sun from nothing">
+
+**It can't tell you a scene is beautiful.** A rank is a floor, not a compliment. [What it can't see](references/validation.md#what-it-cant-see) is written down too, and every check has [a page made to break it](scripts/fixtures), so that the referee gets checked as well.
+
+**And it talks like a party member.** While Claude's using this skill, it sounds like a small, cheerful companion at a 16-bit inn. It's seasoning: numbers, commands and anything you have to decide stay in plain words, it reports just as honestly, and it [drops the voice](references/voice.md) if something's really wrong or you ask it to.
+
+> ▶ Quest complete: Rank A, 25 of 25 checks cleared.
+>
+> I walked the Eye list too, and 14 of the 17 are ticked. Three aren't: the walk, since nobody walks here, and two I can't judge without seeing it move.
+>
+> Still in the fog: how the motion feels, because I judged it from frame strips, and how it runs on a real phone.
+
+<br>
+
 <h2 id="get-it"><img src="docs/media/plate-get.png" width="100%" alt="Get it"></h2>
 
 **In Claude Code,** add it as a plugin, then start a new session:
@@ -115,7 +158,7 @@ And each place gives them something to do.
 git clone https://github.com/rader-ai/painted-pixels ~/.claude/skills/painted-pixels
 ```
 
-To look at your art up close, the tools need Node and Chrome. Run `npm install` once in the skill's `scripts/` folder, and everything runs muted.
+To look at your art up close and to run the referee, the tools need Node and Chrome. Run `npm install` once in the skill's `scripts/` folder, and everything runs muted.
 
 You don't need Claude to use any of this. Open [`assets/starter.html`](assets/starter.html) in a browser, read the guides, and paint by hand. It's a small complete world, and [`assets/kit.js`](assets/kit.js) is the whole toolkit in one file, with no dependencies.
 
@@ -130,6 +173,7 @@ Describe what you want, and Claude picks the skill up by itself. To call it by n
 - *The way my cat walks looks stiff*
 - *Add a lighthouse on a headland, and something that happens there now and then*
 - *This character looks pasted on*
+- *Check my scene against the rule book*
 
 Here's one it made outside the app, as a test: [a snowy cabin at dusk](assets/examples/cabin.html), with its own snow and mountains painted on top of the kit. Download the file and open it to see it move.
 
@@ -143,6 +187,10 @@ Claude reads these as it needs them, and they're written so that you can read th
 
 | Element | The short version | Guide |
 |---|---|---|
+| **The style** | What it is and isn't on one page, with the real numbers from all eight worlds | [style](references/style.md) |
+| **The rule book** | 44 rules, each a Law or a Custom, checked by machine or by eye | [rules](references/rules.md) |
+| **The referee** | How to run it, what the ranks mean, and what it can't see | [validation](references/validation.md) |
+| How we talk | A small, cheerful party member at a 16-bit inn. Facts stay plain | [voice](references/voice.md) |
 | The look | Decide where the eye goes first. Hue-shifted ramps, ordered dither, no blur, outlines only where they earn it | [look](references/look.md) |
 | **Light** | What we care about most. Where it comes from, how it really behaves, what reflects it, and what it does to whatever's moving through it | [light](references/light.md) |
 | Sky | One gradient, stars that each twinkle, a moon that lights things, clouds that gather, change and dissolve | [sky](references/sky.md) |
@@ -163,7 +211,11 @@ assets/kit.js         the whole painting toolkit in one file
 assets/starter.html   a small complete world to copy
 assets/examples/      a whole scene for a web page, made with this skill
 assets/gallery/       real crops from the app, then and now
+assets/dress.css      the panels, buttons and stat bars that go around a scene
+assets/fonts/         Press Start 2P and VT323, for that dress
 scripts/look.mjs      looks at any page up close, on a clock you can step
+scripts/validate.mjs  the referee: checks a scene against the rule book
+scripts/fixtures/     a page made to break each rule, so the referee gets checked too
 docs/                 the pictures on this page, and the scripts that record them
 ```
 
@@ -171,4 +223,4 @@ The kit and the pictures are copied from Lofi Studio's [`index.html`](https://gi
 
 <br>
 
-<p align="center"><sub>Made by <a href="https://happyrader.com">Chris Rader</a> (<a href="https://github.com/rader-ai">@rader-ai</a>) with Claude. The title font is Press Start 2P (SIL Open Font License).<br><a href="LICENSE">MIT license</a>: change it, ship it, even sell it. Just keep the <code>LICENSE</code> file with your copy.</sub></p>
+<p align="center"><sub>Made by <a href="https://happyrader.com">Chris Rader</a> (<a href="https://github.com/rader-ai">@rader-ai</a>) with Claude. The fonts are Press Start 2P and VT323 (SIL Open Font License).<br><a href="LICENSE">MIT license</a>: change it, ship it, even sell it. Just keep the <code>LICENSE</code> file with your copy.</sub></p>

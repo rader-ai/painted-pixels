@@ -47,9 +47,9 @@ A wave has a whole life, and `drawSurf` paints each stage:
 - Reach varies along the shore with noise, and so does the timing.
 - The foam takes the sun's colour near the sun's column, and it's white elsewhere.
 
-**It's painted a pixel at a time,** into a `Uint32Array` for one band across the shore, 640×100. That's the one element in the app done this way, and a band that size costs about a millisecond. Everything expensive is precomputed: the lace table and a noise table (`n1`) in place of computing noise per pixel. If you want per-pixel water, restrict the band, precompute the noise, and measure.
+**It's painted a pixel at a time, every frame,** into a `Uint32Array` for one band across the shore, 640×100. Only the clouds get that treatment too, and a band that size costs about a millisecond. Everything expensive is precomputed: the lace table and a noise table (`n1`) in place of computing noise per pixel. If you want per-pixel water, restrict the band, precompute the noise, and measure.
 
-**Birds and wet sand go together:** sandpipers run down after each wave and back from the next. See `creatures.md`.
+**Birds and wet sand go together:** sandpipers run up and down the wet sand on a slow swing, their legs a blur. See `creatures.md`.
 
 ## Rain on water
 

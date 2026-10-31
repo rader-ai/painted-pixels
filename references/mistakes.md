@@ -25,8 +25,14 @@ Each of these shipped, or nearly did. Most were spotted by someone looking at th
 | Shadows that snapped round at the edge of a fire's reach | The strongest light took over completely, as soon as it reached at all | One shadow for each light, the nearer one's growing with how close you are |
 | A person and a fox fully lit while a cloud darkened everything else | The dimming was painted over the background, before they were drawn | Call `skyDim` after whatever the sun or moon lights, and before anything with its own light |
 | A flat little bar under everyone, whichever way the light was | A shadow with no direction | `castShadow`: their real shape, running away from the point under the light |
+| A shadow that snapped to a new shape as whatever cast it went by | Two ways of drawing a shadow, upright and lying down, with a hard switch at one angle | Change between them gradually. No one saw this by eye: the validator's jump check did |
 | A hard black stripe under the log | A flat shadow at one darkness, with a ruled edge | Thin it along its length, and use a dark flat glow for something soft |
 | A brown rectangle under the campfire | `p.texture` fills a box, and nobody looked at where it ended | Shape worn ground from a distance plus noise, so the grass gives way to it unevenly |
+| A beat changing 7% of the frame in the coffee shop | Each lamp's cone of light pulsed, and a cone covers a wall. At the castle, the glow round the moon pulsed too | Only small things touch the beat, and never the moon. Measured, with rule M5 |
+| A walker who kept walking for people who'd asked for less motion | `reduceMotion` stopped the wind and the birds, but not the stride, and the whole world scrolls with it | Nobody walks under reduced motion. Found by rule M8 |
+| Rain, beads, headlights and steam that kept going in the office, for people who'd asked for less motion | The other worlds have a `still` switch, and this one never got one | Rain hangs in the air under reduced motion, and a fire burns low and slow. Found while checking rule M8 |
+| A black cat that could stay on the castle wall for minutes | It walks at 13 pixels a second and the world scrolls at about the same speed, so walking our way it nearly stands still | After 45 seconds it turns back. A rare sight has to end however the numbers fall. Found by rule M9, on the third run |
+| A fishing rod, a float and a beach flag drawn at fractions of a pixel | Positions from `lerp`, drawn straight to the canvas without rounding | Round before drawing. Found by rule G3, which watches every action to its end |
 | Lightning that only lit the window | It was drawn behind the room | Light the whole room for an instant |
 | Odd arrows along the treeline | Sky showing under the far pines | A solid dark band behind the near row |
 | "The blades of grass... a constant state of moving" | Grass swayed on a sine wave | One wind: still until a gust rolls through |
@@ -39,7 +45,7 @@ Each of these shipped, or nearly did. Most were spotted by someone looking at th
 | Wet sand appearing ahead of the wave, with vertical ends | The wet mark was computed from the peak, even while the water was rising | While rising, the mark follows the water |
 | Comb-like flames | Each tongue drawn separately in three colours | Three passes over all the tongues: reds, then oranges, then the pale heart |
 | "He is walking over fire/in front of the fire" | Drew the walker after the torches | Torches are nearer than the walkway: walker first |
-| "The lights turning off and on in the castle seem too fast" | Windows blinked on a timer and changed on the beat | Slow fades, minutes apart, a candle's waver, never to the beat |
+| "The lights turning off and on in the castle seem too fast" | Windows blinked on a timer and changed on the beat | Each window on its own clock: slow fades, lit for minutes, a candle's waver, never to the beat |
 | "The character bounces a lot in every scene" | The whole sprite hopped a pixel on every beat | No bob at all. A one-pixel breath, and a brief nod when a song starts |
 | "The walk animation... doesn't feel natural" | Two frames, with a sliding foot | Heel-to-toe cycle, with planted feet moving at ground speed |
 | Arms like rabbit ears | Fixed elbow direction | A continuous `bend` channel |

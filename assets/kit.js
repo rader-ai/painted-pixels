@@ -901,23 +901,18 @@ const SHADOW_CV = {};
 function castShadow(k, cv, X, Y, foot, baseY, sd){
   if (sd.alpha <= .01) return;
   const c = SHADOW_CV.cv ||= Object.assign(document.createElement('canvas'), {width: DW, height: DH}), g = SHADOW_CV.g ||= c.getContext('2d');
-  const rows = spriteRows(cv), flat = Math.abs(sd.dx) > Math.abs(sd.dy) * 1.2;
+  // from upright to lying along the ground, gradually, or a shadow snaps as whatever casts it goes by
+  const rows = spriteRows(cv), s = clamp((Math.abs(sd.dx) / Math.max(.01, Math.abs(sd.dy)) - .8) / .8, 0, 1);
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   g.fillStyle = '#000';
   for (const [row, a, b] of rows){
     const h = foot - row;
     if (h < 0) continue;
     const f = h / foot;
-    if (flat ? (f > .7 ? h % 3 : f > .4 ? h & 1 : 0) : f > .62 && (h & 1)) continue;   // it thins away toward the far end
-    let px, py, ww, hh;
-    if (flat){
-      // lying along the ground: the row's width runs into the distance, so it's only a little deep
-      ww = Math.ceil(Math.abs(sd.dx)) + 1; hh = Math.max(1, Math.round((b - a + 1) * .2 * (1 - f * .4)));
-      px = Math.round(X + (a + b) / 2 + h * sd.dx); py = Math.round(baseY + h * sd.dy - hh / 2);
-    } else {
-      ww = b - a + 1; hh = Math.max(1, Math.ceil(Math.abs(sd.dy)));
-      px = Math.round(X + a + h * sd.dx); py = Math.round(baseY + h * sd.dy);
-    }
+    if (s > .5 ? (f > .7 ? h % 3 : f > .4 ? h & 1 : 0) : f > .62 && (h & 1)) continue;   // it thins away toward the far end
+    // the more it lies along the ground, the more a row's width runs into the distance, and the less deep it is
+    const wide = b - a + 1, ww = Math.round(lerp(wide, Math.ceil(Math.abs(sd.dx)) + 1, s)), hh = Math.max(1, Math.round(lerp(Math.ceil(Math.abs(sd.dy)), wide * .2 * (1 - f * .4), s)));
+    const px = Math.round(X + lerp(a, (a + b) / 2, s) + h * sd.dx), py = Math.round(baseY + h * sd.dy - hh / 2 * s);
     g.fillRect(px, py, ww, hh);
     if (px < x0) x0 = px; if (py < y0) y0 = py; if (px + ww > x1) x1 = px + ww; if (py + hh > y1) y1 = py + hh;
   }
@@ -1988,6 +1983,7 @@ function owlFlight(mx, my, homeX, homeY){
 
 // Flames that lean with the wind and breathe with the music, smoke, sparks and the odd pop.
 function campfire(k, t, dt, x, y){
+  if (reduceMotion) t *= .12;   // for anyone who'd rather things stayed still, it burns low and slow
   const g = k.g, st = pst.fire ||= {pop: 5, flare: 0, burst: []};
   const sp = spectrum(6, t), drive = .86 + sp[0] * .42 + flashy() * .16, flick = .8 + vnoise(t * 6, 3, 1, 9) * .4;
   const lean = (reduceMotion ? 0 : WIND(x)) * 3.4;
@@ -2027,7 +2023,7 @@ function campfire(k, t, dt, x, y){
     }
   }
   // sparks
-  for (const s of drifting('sparks', 14, () => ({x, y: y - 6, vx: 0, life: Math.random() * 2}))){
+  if (!reduceMotion) for (const s of drifting('sparks', 14, () => ({x, y: y - 6, vx: 0, life: Math.random() * 2}))){
     s.life -= dt; s.y -= 20 * dt; s.x += (s.vx + lean * 8) * dt;
     if (s.life <= 0){ s.x = x - 4 + Math.random() * 8; s.y = y - 8; s.vx = Math.random() * 12 - 6; s.life = 1 + Math.random() * 1.6; }
     k.rect(s.x, s.y, .5, .5, s.life > .8 ? '#ffe08a' : '#ff8a3a');
@@ -2212,10 +2208,12 @@ function dragonSight(moonY){
 }
 // a black cat with somewhere to be, along the top of the wall
 function wallCatSight(){
-  const dir = Math.random() < .5 ? 1 : -1;
+  let dir = Math.random() < .5 ? 1 : -1, age = 0;
   let x = dir > 0 ? -16 : SW + 10, step = 0, stop = 3 + Math.random() * 6, sit = 0;
   return (k, t, dt) => {
     x -= scene.speed * dt;
+    // walking the way we're walking, it can keep pace with us for minutes: nice for a while, and then it turns back
+    if ((age += dt) > 45) dir = -1;
     if (sit > 0){ sit -= dt; }
     else { x += dir * 13 * dt; step += dt * 8; if ((stop -= dt) <= 0){ sit = 1.8 + Math.random() * 2.2; stop = 4 + Math.random() * 7; } }
     blit(k, sit > 0 ? catSprite('sit', 0, Math.round(Math.sin(t * 1.6) * 1), CAT_BLACK, dir) : catSprite('walk', Math.floor(step) % 4, 0, CAT_BLACK, dir), x * HD, WALL_Y * HD - 15);
@@ -2335,8 +2333,8 @@ PROPS.rod = (k, p, a, X, Y) => {
   }
   const rx = tx + flex, ry = ty + flex * .8;
   // the line runs out to the float on the water, sagging until something takes it
-  const spot = [X + 96, Y + 58 + Math.sin(life.clock * 1.5)], fx = lerp(rx + 3, spot[0], a.cast), dip = a.bite * (Math.sin(life.clock * 13) > 0 ? 3 : 1);
-  const fy = lerp(ry + 18, spot[1], a.cast) + (a.cast > .95 ? dip : 0), sag = (1 - a.tug) * 8 * a.cast;
+  const spot = [X + 96, Y + 58 + Math.sin(life.clock * 1.5)], fx = Math.round(lerp(rx + 3, spot[0], a.cast)), dip = a.bite * (Math.sin(life.clock * 13) > 0 ? 3 : 1);
+  const fy = Math.round(lerp(ry + 18, spot[1], a.cast) + (a.cast > .95 ? dip : 0)), sag = (1 - a.tug) * 8 * a.cast;
   g.fillStyle = 'rgba(232,236,255,.55)';
   for (let i = 0; i <= 40; i++){ const u = i / 40; g.fillRect(Math.round(lerp(rx, fx, u)), Math.round(lerp(ry, fy, u) + Math.sin(u * Math.PI) * sag), 1, 1); }
   if (a.fish > .5){
@@ -2356,6 +2354,7 @@ const X0 = p => Math.round(scene.heroX * HD) + p.near[0], Y0 = p => Math.round(s
 function rainIn(k, dt, x, y, w, h, n, col, key){
   const drops = pst['rain' + key] ||= [];
   while (drops.length < n) drops.push({x: x + Math.random() * (w + 20), y: y + Math.random() * h});
+  if (reduceMotion) dt = 0;   // for anyone who'd rather things stayed still, it hangs in the air
   for (const d of drops){
     d.y += 150 * dt; d.x -= 30 * dt;
     if (d.y > y + h){ d.y = y - 3; d.x = x + Math.random() * (w + 20); }
@@ -2889,7 +2888,7 @@ function runPlace(canvas, id, {who = 'guy', seated = true, walking = false, spee
     const now = performance.now() / 1000, dt = Math.min(.1, now - last);
     last = now;
     windy += ((state.layers.rain.on ? 1.7 : 1) - windy) * Math.min(1, dt * .5);
-    scene.walk += ((walking ? 1 : 0) - scene.walk) * Math.min(1, dt * 3);
+    scene.walk += ((walking && !reduceMotion ? 1 : 0) - scene.walk) * Math.min(1, dt * 3);
     scene.speed = speed * scene.walk;
     scene.scroll += dt * scene.speed;
     if (!reduceMotion) windTick(now, dt);

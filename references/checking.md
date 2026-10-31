@@ -2,6 +2,8 @@
 
 You can't judge pixel art from code. Looking is the job, and it's three different kinds of looking. The feedback at the start of all this was "take your time, get up close and personal with pixels... take the time like an artist would on each individual element".
 
+This guide is how to look. `validation.md` is the referee, which measures what can be measured and tells you what to look at.
+
 ## The tool
 
 `scripts/look.mjs` opens the page in muted headless Chrome with a hand-stepped clock, so the same command shows the same pixels every time and nothing plays out loud. It needs Node and Chrome. Run `npm install` in this skill's `scripts/` folder once. The commands below are written from the skill's folder, and they work from anywhere if you give the full path to `look.mjs`.
@@ -61,7 +63,7 @@ Without `--page`, it opens the nearest `index.html` going up from where you are.
 - Does it steal attention from what should have it?
 - Put the world's own gallery picture next to it. Is it the same quality as what's around it?
 
-**3. At real size: does it read?** `look.mjs phone`. A person is about 16×25 points.
+**3. At real size: does it read?** `look.mjs phone`. A person is about 25 points tall.
 
 - Can you tell what it is?
 - Does the gesture show in the silhouette?
@@ -79,12 +81,11 @@ You can't watch a video here, so judge motion from strips, and be honest that th
 
 ## Before calling it done
 
-- [ ] No page errors, in `shot` and `strip`.
+- [ ] `validate.mjs` has run, every Law holds, and every Custom holds or is excused. It covers page errors, cost, caches, pops, reduced motion and LED mode. See `validation.md`.
+- [ ] The Eye list in `eye.md` is walked, with a note on each.
 - [ ] Each moving thing checked with a strip; each rare sight and action forced and watched end to end, including how it **ends**.
 - [ ] Both characters, if a person's involved: `--who guy`, `--who girl`.
-- [ ] The list at the end of `light.md`: follow the light to everything, film something moving through it, and cover the source.
-- [ ] `perf` under 5 ms a frame, and no worse than before if you changed something existing.
-- [ ] `soak` passes: everything ends by itself, and the caches level off.
+- [ ] No worse than before on `perf`, if you changed something existing.
 - [ ] Strips at close gaps show no pops. The stepped clock runs at 20 to 30 frames a second, so it shows what a fast machine hides and a slow phone doesn't: a big change between two frames half a second apart is a bug.
 - [ ] Reduced motion looks right as a still: `look.mjs shot --reduced`.
 - [ ] Rain on, if it's outdoors: `--rain`.

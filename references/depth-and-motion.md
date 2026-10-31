@@ -99,8 +99,8 @@ For anything you're about to animate, ask: **what moves it, and what is it doing
 |---|---|
 | A breath | About 4 seconds, one pixel |
 | A blink | .13 s, every 2 to 6.5 s, and 18% of them come in doubles |
-| An action (yawn, stretch) | Every 6 to 13 s |
-| Castle windows | On for 2 to 5 minutes, off for 1 to 2 |
+| An action (yawn, stretch) | After a pause of 6 to 13 s |
+| Castle windows | On for 2 to 5 minutes, off for 40 s to 2 minutes, each on its own clock |
 | A fire's pop | Every 3 to 14 s |
 | A bird on a perch | 6 to 20 s, then off, then 6 to 20 s away |
 | A cloud's shape | Visibly different after 10 to 25 seconds |
@@ -109,20 +109,20 @@ For anything you're about to animate, ask: **what moves it, and what is it doing
 
 ## The music rule
 
-**Nothing bounces to the beat.** Characters don't bob, sunflowers don't bop, and the scene doesn't pulse. We had all of those at one point. Music touches the world only where a real thing might respond to it, and then only a little: LEDs on a string, bars on a monitor, runes on a wall, flowers along the very front that grow with the spectrum, a head nod for a few bars when a song starts.
+**Nothing bounces to the beat.** Characters don't bob, sunflowers don't bop, and the scene doesn't pulse. We had all of those at one point. Music touches the world only where a real thing might respond to it, and then only a little: LEDs on a string, bars on a monitor, runes on a wall, flowers along the very front that grow with the spectrum, a head nod for a few bars when a song starts. Torches, a campfire, a desk lamp and the castle's moon take a small lift, which LED mode stops. Altogether, a beat may change at most 3% of the frame (rule M5).
 
 There's one useful hidden link: on each quarter note the stride is nudged a little so that a foot lands with it (`scene.nudge`). You feel it, but you don't see it.
 
 ## Reduced motion, LED mode, covers
 
-- `reduceMotion`: wind stops, the clock freezes for surf, rare sights don't start, and the person only blinks. Everything must still look right as a still image, and it's worth checking that it does.
+- `reduceMotion`: wind stops, the clock freezes for surf, rain hangs in the air, a fire burns low and slow, rare sights don't start, nobody walks, so nothing scrolls, and the person only blinks. Everything must still look right as a still image, and it's worth checking that it does.
 - `ledMode`/`flashy()`: nothing flashes with the beat.
 - `k.live`: false when a place is drawn for cover art. `rare` skips itself, so a whale doesn't appear on an album cover at random.
 - Everything uses `dt`, clamped (`Math.min(.1, ...)`), so a tab coming back from the background doesn't make things jump.
 
 ## Cost
 
-Budget: **under 5 ms a frame on a laptop** so that an older phone holds its frame rate with the audio running. The app's worlds run from about 1.5 ms (the office) to about 5 (the park, right at the limit). One measurement is shaky: run it twice with nothing else busy.
+Budget: **under 5 ms a frame on a laptop** so that an older phone holds its frame rate with the audio running. The app's worlds run from about 1.5 ms (the office) to about 6 (the park, which is over). One measurement is shaky: run it twice with nothing else busy.
 
 - Paint once whatever doesn't move. Painting a background is slow; drawing the finished canvas is almost free.
 - Cache sprites in a `Map`, keyed by everything that changes them: `leafClump`, `tuftSprite`, `glowSprite`, `rigFrame`. One clump, a thousand times.

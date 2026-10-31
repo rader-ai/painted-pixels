@@ -34,7 +34,7 @@ blit(k, cv, x * HD, y * HD - 9);
 - `dir` flips the sprite. Everything is drawn facing right.
 - `tippedSprite(id, cv, deg)` rotates one, by sampling a 4× copy. Round to steps (`Math.round(angle / 6) * 6`), or the cache won't stop growing.
 
-**Small things** can skip the sprite and use a few `k.rect` calls: a sandpiper is 7 of them. Rigid, even smaller things can be rows: `BAT`, `OWL_ROWS`.
+**Small things** can skip the sprite and use a few `k.rect` calls: a sandpiper is 6 of them. Rigid, even smaller things can be rows: `BAT`, `OWL_ROWS`.
 
 **Paint it in its natural colours, and let the light do the rest.** `blit` draws a sprite as it looks where it is right now: dim and tinted by the place, warmer near a lamp or fire, with a lit edge on the side the light comes from. `onGround` casts its shadow first. See `light.md`.
 
@@ -51,7 +51,7 @@ blit(k, cv, x * HD, y * HD - 9);
 | Deer | Walks in, grazes, lifts its head and flicks an ear, grazes again, turns round and leaves |
 | Fox | Trots across, stops partway, looks, carries on |
 | Crab | Goes in dashes, rests, and raises its claws; hurries off if the walker gets close |
-| Sandpipers | Run down after each wave and back from the next |
+| Sandpipers | Run up and down the wet sand on a slow swing, their legs a blur |
 | Rabbit | A few hops, then a wait with a twitching nose |
 | Owl | Blinks, looks around, sometimes drops off its bough, glides across the moon and comes back |
 | Whale | Blows far out, blows again nearer, then the whole animal comes up, hangs, rolls and comes down on its side |

@@ -1,0 +1,18 @@
+{
+  "scripts/fixtures/blur.html": {"fails": ["G1", "G2", "G4"]},
+  "scripts/fixtures/offgrid.html": {"fails": ["G3"], "passes": ["G2"]},
+  "scripts/fixtures/stretch.html": {"quick": false, "fails": ["G5"]},
+  "scripts/fixtures/unseeded.html": {"fails": ["G6"]},
+  "scripts/fixtures/dead.html": {"fails": ["C1", "C2"]},
+  "scripts/fixtures/samehue.html": {"fails": ["C3"], "passes": ["C1"]},
+  "scripts/fixtures/flat.html": {"fails": ["C4", "C5", "D1", "M1"]},
+  "scripts/fixtures/busy.html": {"fails": ["M2"]},
+  "scripts/fixtures/pop.html": {"fails": ["M3"]},
+  "scripts/fixtures/beat.html": {"fails": ["M4", "M5", "M6"]},
+  "scripts/fixtures/nolife.html": {"fails": ["L1", "M7", "P1", "P2"]},
+  "scripts/fixtures/stuck.html": {"quick": false, "fails": ["M7", "M8", "M9", "K2"]},
+  "scripts/fixtures/slow.html": {"quick": false, "fails": ["K1"]},
+  "scripts/fixtures/throws.html": {"fails": ["K3"]},
+  "assets/starter.html": {"quick": false, "noLaws": true},
+  "assets/examples/cabin.html": {"quick": false, "noLaws": true}
+}

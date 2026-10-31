@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><title>fixture</title><style>html,body{margin:0;background:#111}canvas{display:block;image-rendering:pixelated}</style><canvas id="c"></canvas><script src="../../assets/kit.js"></script>
+<script>const FSKY=['#02041a','#050824','#0a1032','#121a44','#1c2856','#2a3a6c'];const FGROUND=x=>112-6*Math.sin(x*.011+4.4);
+PLACES.t={sky(p){p.sky(FSKY,0,112)},bg(p){p.lawn(FGROUND,PAL_GRASS_NIGHT,7,{base:.5,swell:.25});p.vignette(.45)}, draw(g,t,dt,k){k.img(placeSky('t'),0,0);k.img(placeBg('t'),0,0);sitHero(k,152,122);g.fillStyle='rgba(30,34,52,.92)';g.fillRect(0,0,640,300);g.fillStyle='#fff';g.fillRect(Math.round(t*20)%640,20,8,8);}};
+const cv=document.getElementById('c');cv.width=DW;cv.height=DH;const gg=cv.getContext('2d'),kk=ck(gg);gg.imageSmoothingEnabled=false;kk.who='girl';kk.live=true;kk.light=LIGHTS.park;function fr(){PLACES.t.draw(gg,performance.now()/1000,.05,kk);requestAnimationFrame(fr)}requestAnimationFrame(fr);</script>

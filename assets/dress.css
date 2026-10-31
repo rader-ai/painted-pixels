@@ -1,0 +1,43 @@
+/* The dress: what goes around a scene, on a page. The same colours, panels and buttons as Lofi Studio.
+   Link this, and copy assets/fonts/ next to it. See "Around the scene" in references/style.md. */
+@font-face{font-family:"Press Start 2P";src:url(fonts/press-start-2p-latin-400-normal.woff2) format("woff2");font-display:swap}
+@font-face{font-family:VT323;src:url(fonts/vt323-latin-400-normal.woff2) format("woff2");font-display:swap}
+
+:root{
+  --pp-ink:#07040f; --pp-night:#120c28; --pp-stone:#1d1640; --pp-stone2:#2a2058; --pp-edge:#5b4a9e; --pp-edge2:#8a78d6;
+  --pp-text:#ece6ff; --pp-muted:#a79dd6; --pp-gold:#f5c542; --pp-gold2:#b8892a; --pp-torch:#e8692c; --pp-torch2:#ffb347;
+  --pp-blood:#c2334d; --pp-teal:#4fd1c5;
+  --pp-title:"Press Start 2P", monospace; --pp-body:VT323, ui-monospace, monospace;
+}
+.pp-page{margin:0;color:var(--pp-text);background:var(--pp-night);font:22px/1.15 var(--pp-body)}
+
+/* A scene on a page: no smoothing, and sized by whole numbers in your script. See "On a web page" in look.md. */
+.pp-scene{display:block;image-rendering:pixelated}
+
+/* Square corners always. Depth comes from rings of solid colour, never a soft shadow. */
+.pp-panel{background:var(--pp-stone);border:4px solid var(--pp-edge);box-shadow:0 0 0 4px var(--pp-ink),inset 0 0 0 3px var(--pp-ink);padding:16px}
+.pp-plate{position:relative;display:flex;align-items:center;gap:18px;padding:17px 24px 16px;color:var(--pp-text);
+  background:linear-gradient(180deg,var(--pp-stone2) 0 4px,var(--pp-stone) 4px);border:4px solid var(--pp-edge);
+  box-shadow:0 0 0 4px var(--pp-ink),inset 0 0 0 3px var(--pp-ink),inset 0 0 0 6px #241b4c}
+.pp-plate::before,.pp-plate::after{content:"";position:absolute;top:6px;width:6px;height:6px;background:var(--pp-gold);box-shadow:0 0 0 2px var(--pp-ink)}
+.pp-plate::before{left:6px} .pp-plate::after{right:6px}
+
+.pp-title{margin:0;font:20px/1.25 var(--pp-title);color:var(--pp-gold);text-shadow:2px 2px 0 var(--pp-ink),4px 4px 0 #3b2a7a}
+.pp-label{font:12px/1.2 var(--pp-title);color:var(--pp-muted)}
+
+/* A button looks pressable because of its bevel. Keep text on it short. */
+.pp-btn{all:unset;display:inline-flex;align-items:center;gap:12px;padding:16px 22px;font:14px/1 var(--pp-title);cursor:pointer;color:var(--pp-text);background:var(--pp-stone2);
+  box-shadow:0 0 0 3px var(--pp-ink),inset -4px -4px 0 rgba(0,0,0,.4),inset 4px 4px 0 rgba(255,255,255,.14)}
+.pp-btn.go{background:var(--pp-torch);color:var(--pp-ink)}
+.pp-btn:active{box-shadow:0 0 0 3px var(--pp-ink),inset 4px 4px 0 rgba(0,0,0,.4),inset -4px -4px 0 rgba(255,255,255,.14)}
+.pp-btn:focus-visible{outline:3px solid var(--pp-gold);outline-offset:3px}
+
+/* A stat bar, in blocks */
+.pp-bar{display:flex;gap:3px;height:16px}
+.pp-bar i{flex:1 1 0;max-width:26px;background:var(--pp-stone2);box-shadow:inset 0 0 0 2px var(--pp-ink)}
+.pp-bar i.on{background:var(--pp-teal)}
+
+/* Icons are squares on an 8x8 grid, in an SVG with these settings */
+.pp-icon{display:block;width:24px;height:24px;fill:currentColor;shape-rendering:crispEdges}
+
+@media (prefers-reduced-motion:reduce){.pp-page *{animation:none !important;transition:none !important}}

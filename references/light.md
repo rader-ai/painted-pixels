@@ -147,11 +147,13 @@ Lights change at the pace of the people or things behind them. This is where lig
 - **Windows in the city** go off for a while and come back: someone's getting a glass of water.
 - **A cloud crossing the moon or sun** dims the scene by as much as it really covers.
 - **A fire** flickers, leans in the wind and flares when a log pops. Everything it lights flickers with it, including shadows.
-- **Lightning** lights the whole room for an instant, not only the window. (Never in LED mode.)
+- **Lightning** lights the whole room for an instant, not only the window. In LED mode, only the window flashes.
 
 ## With or without the beat
 
-The lights that react to music are the ones a real thing might: an LED string, a monitor's bars, a visualiser. They read the beat through `flashy()`, which returns 0 in LED mode so that nothing flashes for people who'd rather it didn't. Candlelight, firelight, the sun and the moon never pulse to the music.
+The lights that follow the music outright are the ones a real thing might: an LED string, a monitor's bars, a visualiser. Torches, the campfire, a desk lamp and the castle's moon take a small lift on the beat. They all read it through `flashy()`, which returns 0 in LED mode, so that nothing flashes for people who'd rather it didn't. The sun never pulses.
+
+Keep the lift small, and measure it: rule M5 lets a beat change at most 3% of the frame. A wide cone of light is what goes over. The coffee shop's lamps pulsed until the validator showed a beat changing 7% of the frame, so they're steady now.
 
 ## How to check it
 

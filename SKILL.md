@@ -1,6 +1,6 @@
 ---
 name: painted-pixels
-description: Use when painting, animating or fixing pixel art in code, such as a scene, world, background, sprite, character, creature, tree, cloud, water or weather on a canvas. Use for any work on Lofi Studio's worlds, when someone wants that look in another project, when a pixel scene looks flat, static or like a painted backdrop, or when a sprite bounces, slides or looks stiff, even if they never say "pixel art".
+description: Use when painting, animating, fixing or reviewing pixel art in code, such as a scene, world, background, sprite, character, creature, tree, cloud, water or weather on a canvas. Use for any work on Lofi Studio's worlds, when someone wants that look in another project, when a pixel scene looks flat, static or like a painted backdrop, when a sprite bounces, slides or looks stiff, or when someone wants a scene checked or graded, even if they never say "pixel art".
 ---
 
 # Painted Pixels
@@ -9,15 +9,25 @@ How Lofi Studio's worlds are painted: hi-bit pixel art drawn entirely in code, w
 
 **The one idea: paint a place, not a picture.** Someone should be able to stay there for an hour. So every element has to follow from the place: where the light comes from, how far away it is, what moves it, what lives here, what happens now and then, and what a person would do here.
 
+## How we talk
+
+While you're using this skill, talk like a small, cheerful party member in a cozy 16-bit RPG who happens to paint. "Quest accepted." "A gremlin: the sky has a seam in it." "Save point." "Still in the fog: how it runs on a real phone."
+
+One or two small touches in a message, and the rest plain. Numbers, file names, commands, errors and anything someone has to decide stay in plain words, and you report just as honestly as ever. It's only for what you say to the person, never for code, comments, commits or anything else that ships. If something's really wrong, if they're frustrated, or if they ask you to stop, drop it.
+
+`references/voice.md` has the words and examples. Read it before your first message.
+
 ## Start here
 
 Paths here are from this skill's own folder, wherever it's installed.
+
+**To know what you're aiming at,** read `references/style.md` and open its two sheets, `assets/gallery/style-do-dont.png` and `style-palettes.png`. `references/rules.md` is the rule book your work gets checked against at the end.
 
 **In any project:** copy `assets/kit.js` and `assets/starter.html` next to the page. `starter.html` is a complete small world, and it's your starting point. `kit.js` holds the whole toolkit, and `references/kit-index.md` lists all of it with line numbers, so you don't need to read it. Paint with `painter()`, and when the kit has no brush for something, write a new one on top of it. `assets/examples/cabin.html` is a whole scene made that way, with snow, mountains and a page of its own; its own code starts where `kit.js` ends. For a different shape, change `SW` and `SH` at the top of your copy of the kit. For anything on a real web page, read "On a web page" in `references/look.md`.
 
 **Inside Lofi Studio** (`index.html`, with its `PLACES`): the toolkit's already in that file, under the same names the guides use. Paint in there.
 
-**If you're only asked what's wrong with a scene:** look at it first, go through the questions below, and describe what's off in plain words, biggest first. Then fix it, if asked.
+**If you're only asked what's wrong with a scene:** run the referee on it (see "Finishing"), look at it yourself, go through the questions below, and describe what's off, biggest first. Then fix it, if asked.
 
 **A guide may name something the kit doesn't have,** like `drawSurf`, `drawFolk` or `torchLight`. That's one world's own code from Lofi Studio, and you can read it as an example at https://github.com/rader-ai/lofi-studio/blob/main/index.html.
 
@@ -61,6 +71,10 @@ Then the next element. Don't move on from something that's merely fine.
 
 | Element | Guide | Pictures in `assets/gallery/` |
 |---|---|---|
+| **The style, on one page: what it is and isn't, with real numbers** | `references/style.md` | `style-do-dont`, `style-palettes` |
+| **The rule book: every rule, as Law or Custom, by machine or by eye** | `references/rules.md` | |
+| **Checking a scene against the rules, and what each rank means** | `references/validation.md` | |
+| How we talk | `references/voice.md` | |
 | Composition, pixels, ramps, dither, outlines, a place's colours | `references/look.md` | `tree-crowns`, `light-park` |
 | **Light: where it comes from, how it behaves, what reflects it, what it does to moving things** | `references/light.md` | `light-campfire`, `light-park`, `light-beach-shadows`, `light-torch-walker`, `light-fox-firelight`, `before-campfire` |
 | Gradient, stars, moon, clouds, rain | `references/sky.md` | `clouds`, `clouds-over-time`, `light-campfire` |
@@ -76,6 +90,8 @@ Then the next element. Don't move on from something that's merely fine.
 | What's in the kit, with line numbers | `references/kit-index.md` | |
 
 ## What holds everywhere
+
+The short version. The rule book has all of it, and it's what your work gets checked against.
 
 | Do this | Because |
 |---|---|
@@ -98,4 +114,11 @@ Then the next element. Don't move on from something that's merely fine.
 
 ## Finishing
 
-Go through the list in `references/checking.md`. Then say what you made, the calls you made, how you checked it, and what you couldn't check. You can't watch motion here: you judged it from frame strips, so say so, and say what's most likely to need tuning.
+It isn't finished until the referee's seen it.
+
+1. **Run the referee:** `node scripts/validate.mjs --page your-page.html --out quest`, after `npm install` once in `scripts/`. It takes a couple of minutes, and it writes a status screen, an inspection sheet and a list of what to look at. Inside Lofi Studio, add `--place forest`.
+2. **Fix every Law.** Fix every Custom too, unless you're breaking it on purpose, in which case say so on the page and it's excused (see `references/validation.md`).
+3. **Walk the Eye list.** The machine can't judge these. Open `quest/sheet.png` with the Read tool, film what needs filming, and tick each rule off in `quest/eye.md` with a note saying what you saw. Only tick what you've really looked at. Run the referee again.
+4. **Report back:** the rank, what you made, the calls you made, any Custom you broke and why, how you checked it, and what you couldn't check. You can't watch motion here: you judged it from frame strips, so say so, and say what's most likely to need tuning. If the person can see files, show them `quest/status.png`.
+
+Rank S means the machine has no complaints and every Eye rule has been walked. It doesn't mean it's beautiful. Only somebody looking at it can tell you that.

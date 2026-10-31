@@ -1,6 +1,6 @@
 {
   "name": "painted-pixels",
-  "description": "Paint pixel worlds in code that you could stay in for an hour: light that comes from somewhere, clouds that change, people who feel alive. The craft and the toolkit behind Lofi Studio.",
+  "description": "Paint pixel worlds in code that you could stay in for an hour: light that comes from somewhere, clouds that change, people who feel alive. The craft and the toolkit behind Lofi Studio, with a style guide, a rule book and a referee that checks the work.",
   "author": {
     "name": "Chris Rader",
     "url": "https://happyrader.com"
@@ -8,6 +8,6 @@
   "homepage": "https://github.com/rader-ai/painted-pixels",
   "repository": "https://github.com/rader-ai/painted-pixels",
   "license": "MIT",
-  "keywords": ["pixel-art", "canvas", "animation", "game-art", "skill"],
+  "keywords": ["pixel-art", "canvas", "animation", "game-art", "style-guide", "validation", "skill"],
   "skills": ["./"]
 }

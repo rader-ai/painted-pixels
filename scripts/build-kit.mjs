@@ -102,7 +102,7 @@ function runPlace(canvas, id, {who = 'guy', seated = true, walking = false, spee
     const now = performance.now() / 1000, dt = Math.min(.1, now - last);
     last = now;
     windy += ((state.layers.rain.on ? 1.7 : 1) - windy) * Math.min(1, dt * .5);
-    scene.walk += ((walking ? 1 : 0) - scene.walk) * Math.min(1, dt * 3);
+    scene.walk += ((walking && !reduceMotion ? 1 : 0) - scene.walk) * Math.min(1, dt * 3);
     scene.speed = speed * scene.walk;
     scene.scroll += dt * scene.speed;
     if (!reduceMotion) windTick(now, dt);
