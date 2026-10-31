@@ -1,0 +1,5 @@
+.DS_Store
+
+# the tools' dependencies: npm install puts them back
+scripts/node_modules/
+scripts/package-lock.json

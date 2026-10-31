@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A small world</title>
+<style>
+  html, body { margin: 0; background: #03040f; overflow-x: hidden; }
+  canvas { display: block; image-rendering: pixelated; }
+</style>
+<canvas id="world" aria-label="Someone sitting on a hillside under the moon, by a pine and an old tree"></canvas>
+<script src="kit.js"></script>
+<script>
+// A complete small world, as a starting point. Copy this page and kit.js, then repaint it.
+// Coordinates are the 320x150 scene grid; the canvas is 640x300, so half pixels are real pixels.
+
+// Say where the light is first. Everything below reads from these, so it can't disagree.
+const MOON = {x: 74, y: 26, r: 8};
+LIGHTS.hill = {id: 'h', dim: .68, tint: [16, 22, 60], tintAmt: .24, rim: '#aebcf0', rimAmt: .45, side: -1, far: .62, ink: '#03040c', seat: 127,
+  key: {x: MOON.x, horizon: 96, long: .9, shadow: .2, col: '#aebcf0'}};   // shadows run away from the point on the horizon under the moon
+LOCAL.hill = ['read', 'sky', 'muse'];   // what someone does here; they also do all the small human things
+
+// The land, as functions, so that the painting and the things standing on it agree.
+const RIDGE = x => 92 - 9 * Math.sin(x * .014 + 2.2) - 3 * Math.sin(x * .05);
+const SLOPE = x => 112 - 6 * Math.sin(x * .011 + 4.4) - 1.5 * Math.sin(x * .07);
+// Ramps belong to a light. The kit's bark and leaves are for daylight, and they'd glow under the moon.
+const BARK_NIGHT = ['#06080e', '#0c1018', '#141a26', '#1e2838', '#2e3c52'].map(rgb);
+const LEAF_NIGHT = ['#04080e', '#081219', '#0e1c24', '#142830', '#1e3a42', '#34565e'];
+// one tree, kept as a model: the limbs are painted once, the leaves are drawn every frame so they can sway
+const OAK = treeModel({x: 248, y: 118, h: 19, rx: 26, ry: 18, pal: LEAF_NIGHT, pal2: LEAF_NIGHT, seed: 12, lean: -2, sun: -1, w: 3});
+
+PLACES.hill = {
+  // painted once: what stars, moon and clouds go in front of
+  sky(p){ p.sky(['#02041a', '#050824', '#0a1032', '#121a44', '#1c2856', '#2a3a6c'], 0, 112); },
+
+  // painted once: everything that doesn't move, back to front. Far things are paler and flatter.
+  bg(p){
+    const moon = {x: MOON.x};
+    p.hill(RIDGE, ['#0c1236', '#121a44', '#1a2452', '#243062'], 13, {rim: '#4a5c9a', depth: 20});
+    for (let x = -4, r = mulberry32(5); x < SW + 6; x += 5 + r() * 8) p.pine(x, RIDGE(x) + 3, 12 + r() * 12, ['#0a1430', '#0e1a3a', '#142244', '#1c2c52', '#2a3c66', '#44588e'], x, {moon});
+    // moonlight falls on the slope nearest the moon, and each tree's shade falls away from it
+    p.lawn(SLOPE, PAL_GRASS_NIGHT, 7, {base: .5, swell: .25, light: (x, y) => Math.max(0, 1 - Math.abs(x - MOON.x) / 200) * .3});
+    p.pine(30, 128, 62, ['#040814', '#070e1c', '#0b1426', '#111e34', '#1c2c4a', '#2e4670'], 3, {moon});
+    for (const part of [...OAK.branches, ...OAK.roots, OAK.trunk]) stroke(p, part, BARK_NIGHT, -1);
+    p.ellipse(164, 127.5, 16, 1.5, 'rgba(2,4,12,.5)');                                       // the log's shadow, and the log
+    p.wood(150, 122, 26, 5, ['#08080e', '#101018', '#1a1a24', '#262632', '#363444'], 40);
+    p.vignette(.45);
+  },
+
+  // every frame, back to front
+  draw(g, t, dt, k){
+    const still = reduceMotion;
+    k.img(placeSky('hill'), 0, 0);
+    starField(k, t, 'stars', 150, 96, 77);
+    shootingStars(k, dt, 'shooting', 100, 300, 6, 40);
+    moonOrb(k, MOON.x, MOON.y, MOON.r, .42);
+    cloudDeck(k, t, dt, 'clouds', {n: 3, y0: 4, y1: 36, w0: 56, w1: 120, speed: 1.3, cols: C_MOONLIT, seed: 5, tall: .14, moon: MOON});
+    rare(k, t, dt, 'hillSky', {comet: cometSight, bats: () => batSight(MOON.x + 40, MOON.y + 20)}, [20, 50]);
+    k.img(placeBg('hill'), 0, 0);
+    drawTufts(k, pst.edge ||= fringe(SLOPE, -4, SW + 4, 9, {size: 5, lv: 1}), PAL_GRASS_NIGHT, t, still);
+    drawClumps(k, OAK.clumps, t, still);
+    fireflies(k, t, dt, 'flies', 10, 20, 300, 100, 140);
+    sitHero(k, 152, 122);
+    drawTufts(k, pst.near ||= fringe(() => 149, -4, SW + 4, 77, {size: 10, lv: 1, depth: 2}), PAL_GRASS_NIGHT, t, still);
+    drawFronds(k, t, still, PAL_FROND_NIGHT, [13, 17]);
+  },
+};
+
+const world = document.getElementById('world');
+runPlace(world, 'hill', {who: 'girl'});
+
+// Every art pixel is a whole number of device pixels, or the dither goes uneven. A phone crops
+// the sides and sees the middle larger, rather than seeing all of it smaller.
+function fit(){
+  const dpr = devicePixelRatio || 1, wide = document.documentElement.clientWidth, scale = Math.max(1, Math.round(wide * dpr / DW)), shown = DW * scale / dpr;
+  world.style.width = shown + 'px';
+  world.style.marginLeft = Math.round((wide - shown) / 2 * dpr) / dpr + 'px';
+}
+addEventListener('resize', fit);
+fit();
+</script>
+</html>

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "painted-pixels",
+  "description": "The craft and the toolkit behind Lofi Studio's pixel worlds, as a skill for Claude Code.",
+  "owner": {
+    "name": "Chris Rader",
+    "url": "https://happyrader.com"
+  },
+  "plugins": [
+    {
+      "name": "painted-pixels",
+      "description": "Paint pixel worlds in code that you could stay in for an hour: light that comes from somewhere, clouds that change, people who feel alive.",
+      "source": "./"
+    }
+  ]
+}
