@@ -35,16 +35,17 @@ clip fox-firelight 0060 --place forest --at 2 --sight forestEdge:fox --skip 3 --
 clip beach-shadows 0060 --place beach --at 53 --seconds 8 --loop 5 --crop 0,180,640,120 --zoom 2
 # every layer of the castle scrolls, which is the one thing lossless can't keep small
 MODE="-mixed -q 84" clip torch-walker 0060 --place castle --at 4 --seconds 9 --loop 5 --crop 30,150,300,110 --zoom 2
-clip cloud-sun 0055 --place park --at 62 --speed 4 --seconds 7.5 --loop 8
+clip cloud-sun 0055 --place park --at 62 --gap .24 --seconds 30 --loop 8
 
 # things with lives of their own: clouds at eight times real speed, a wave, a whale
-clip clouds-night 0040 --place forest --at 20 --speed 8 --seconds 6 --loop 8 --crop 0,0,640,130
-clip clouds-day 0040 --place park --at 96 --speed 8 --seconds 6 --loop 8 --crop 0,0,640,130
+clip clouds-night 0040 --place forest --at 20 --gap .48 --seconds 48 --loop 8 --crop 0,0,640,130
+clip clouds-day 0040 --place park --at 96 --gap .48 --seconds 48 --loop 8 --crop 0,0,640,130
 clip surf 0060 --place beach --at 6 --seconds 9 --loop 5 --crop 340,195,280,65 --zoom 2
 clip whale 0034 --place beach --at 2 --sight beachSea:whale --skip 5.8 --seconds 5.4 --loop 5 --crop 0,60,640,160
 
 # small human moments
 clip marshmallow 0060 --place forest --at 3 --act smoreFire --actat 5.5 --seconds 15 --loop 8 --crop 290,170,170,90 --zoom 2
+clip fishing 0048 --place lake --at 16 --act fish --actat 11.5 --seconds 6.6 --loop 8 --crop 240,110,340,180 --zoom 2
 clip wink 0016 --place garden --who girl --at 2 --act wink --seconds 2.6 --loop 4 --crop hero --zoom 2
 clip yawn 0034 --place garden --who guy --at 2 --act yawn --seconds 4.8 --loop 4 --crop hero --zoom 2
 clip sneeze 0026 --place garden --who girl --at 2 --act sneeze --seconds 3.8 --loop 4 --crop hero --zoom 2

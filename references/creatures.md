@@ -38,7 +38,7 @@ blit(k, cv, x * HD, y * HD - 9);
 
 **Paint it in its natural colours, and let the light do the rest.** `blit` draws a sprite as it looks where it is right now: dim and tinted by the place, warmer near a lamp or fire, with a lit edge on the side the light comes from. `onGround` casts its shadow first. See `light.md`.
 
-**In another project,** the kit's `foxSight` and `deerSight` have the campfire's ground height and firelight built in, so copy them and change those. `birdLife` takes your own perches.
+**In another project,** the kit's `foxSight` and `deerSight` walk along the campfire's ground row, so copy them and change that. Their warmth comes from `k.light`, so it just works. `birdLife` takes your own perches.
 
 **Reference size:** a person is 24×41 canvas pixels. Crab 16×10, bird 15×11, rabbit 12×10, cat 24×16, fox 26×14, deer 32×28, dolphin 25×9, whale 90×38. The whale's much bigger than it would be at that distance, on purpose: it's the moment people remember.
 

@@ -7,6 +7,7 @@ You can't judge pixel art from code. Looking is the job, and it's three differen
 `scripts/look.mjs` opens the page in muted headless Chrome with a hand-stepped clock, so the same command shows the same pixels every time and nothing plays out loud. It needs Node and Chrome. Run `npm install` in this skill's `scripts/` folder once. The commands below are written from the skill's folder, and they work from anywhere if you give the full path to `look.mjs`.
 
 ```bash
+# --place and --who are for Lofi Studio. On your own page, leave them out
 # one frame, at 2x
 node scripts/look.mjs shot --page path/to/page.html --place forest --at 6 --out a.png
 
@@ -19,6 +20,9 @@ node scripts/look.mjs strip --place beach --n 6 --gap 1.2 --crop 0,180,640,90 --
 # ask for a rare sight or an action now
 node scripts/look.mjs strip --place beach --sight beachSea:whale --n 12 --gap .95 --crop 0,60,640,160 --zoom 1 --out whale.png
 node scripts/look.mjs strip --place forest --act smoreFire --n 12 --gap 1.75 --crop hero --out smore.png
+
+# start late: ask for the sight at 2 seconds, then wait 10 until it's near
+node scripts/look.mjs strip --place forest --at 2 --sight forestEdge:fox --skip 10 --n 8 --gap .7 --out fox.png
 
 # a recording, as numbered PNGs: to step through, or to put in your own README
 node scripts/look.mjs clip --place beach --seconds 8 --loop 8 --out frames

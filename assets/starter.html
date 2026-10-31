@@ -52,16 +52,19 @@ PLACES.hill = {
     k.img(placeSky('hill'), 0, 0);
     starField(k, t, 'stars', 150, 96, 77);
     shootingStars(k, dt, 'shooting', 100, 300, 6, 40);
-    moonOrb(k, MOON.x, MOON.y, MOON.r, .42);
-    cloudDeck(k, t, dt, 'clouds', {n: 3, y0: 4, y1: 36, w0: 56, w1: 120, speed: 1.3, cols: C_MOONLIT, seed: 5, tall: .14, moon: MOON});
+    moonOrb(k, MOON.x, MOON.y, MOON.r, .42 * (1 - (pst.hillDim || 0) * .6));
+    // cloudDeck says how much of the moon it's covering, for skyDim below
+    const cover = cloudDeck(k, t, dt, 'clouds', {n: 3, y0: 4, y1: 36, w0: 56, w1: 120, speed: 1.3, cols: C_MOONLIT, seed: 5, tall: .14, moon: MOON});
     rare(k, t, dt, 'hillSky', {comet: cometSight, bats: () => batSight(MOON.x + 40, MOON.y + 20)}, [20, 50]);
     k.img(placeBg('hill'), 0, 0);
     drawTufts(k, pst.edge ||= fringe(SLOPE, -4, SW + 4, 9, {size: 5, lv: 1}), PAL_GRASS_NIGHT, t, still);
     drawClumps(k, OAK.clumps, t, still);
-    fireflies(k, t, dt, 'flies', 10, 20, 300, 100, 140);
     sitHero(k, 152, 122);
     drawTufts(k, pst.near ||= fringe(() => 149, -4, SW + 4, 77, {size: 10, lv: 1, depth: 2}), PAL_GRASS_NIGHT, t, still);
     drawFronds(k, t, still, PAL_FROND_NIGHT, [13, 17]);
+    // a cloud over the moon takes its light from everything drawn so far; what has its own light comes after
+    skyDim(k, 'hillDim', cover, dt, '3,5,18', .24, LIGHTS.hill);
+    fireflies(k, t, dt, 'flies', 10, 20, 300, 100, 140);
   },
 };
 

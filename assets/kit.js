@@ -831,8 +831,9 @@ function lightAt(L, x, y){
     const d = Math.hypot(x - s.x, (y - s.y) * 1.3) / s.r, v = d < 1 ? (1 - d) * (1 - d) : 0;
     if (v > best){ best = v; spot = s; }
   }
-  const from = spot || L.key, side = from ? Math.sign(from.x - x) || 1 : L.side || 1;
-  return {level: best > .42 ? 3 : best > .18 ? 2 : best > .04 ? 1 : 0, side, spot};
+  // too faint to see by yet, it doesn't get to say which side is lit
+  const felt = best > .04 ? spot : null, from = felt || L.key, side = from ? Math.sign(from.x - x) || 1 : L.side || 1;
+  return {level: best > .42 ? 3 : best > .18 ? 2 : best > .04 ? 1 : 0, side, spot: felt, nearest: spot, strength: best};
 }
 // A sprite as it looks in this light, at this level, with its edge lit on this side: dim and
 // tinted as the place is, warmer the nearer it is to a lamp or fire. Worked out once for each.
@@ -876,18 +877,23 @@ function spriteRows(cv){
   }
   return cv._rows = rows;
 }
-// Which way a shadow falls from something standing at (x, y), and how dark. From the sun or moon,
-// it runs away from the point on the horizon under the light, so shadows fan out across the ground
-// as a road's edges do. From a lamp or fire, it runs straight away from it, longer the farther off.
-function shadowOf(L, x, y){
-  const at = lightAt(L, x, y), s = at.spot;
+// Every shadow something standing at (x, y) throws, each with its direction and how dark. From the sun
+// or moon, one running away from the point on the horizon under the light, so shadows fan out across the
+// ground as a road's edges do. From a lamp or fire, one running straight away from it, longer the farther
+// off, which strengthens as you get closer, so nothing snaps on at the edge of its reach. Close by, it
+// washes out the other.
+function shadowsOf(L, x, y){
+  const at = lightAt(L, x, y), s = at.nearest, out = [];
+  if (L.key && L.key.shadow){
+    const K = L.key, vx = x - K.x, vy = Math.max(6, y - K.horizon), n = Math.hypot(vx, vy);
+    const alpha = K.shadow * (1 - (L.veiled || 0) * .85) * (1 - Math.min(1, at.strength * 2));
+    if (alpha > .01) out.push({dx: vx / n * K.long, dy: vy / n * K.long, alpha, ink: L.ink});
+  }
   if (s && s.shadow){
     const vx = x - s.x, vy = y - s.y, n = Math.hypot(vx, vy) || 1, long = s.long * (1 + n / s.r) * (s.fire ? .92 + vnoise(life.clock * 7, 5, 1, 19) * .16 : 1);
-    return {dx: vx / n * long, dy: vy / n * long, alpha: s.shadow * (.35 + at.level * .22), ink: L.ink};
+    out.push({dx: vx / n * long, dy: vy / n * long, alpha: s.shadow * Math.min(1, Math.sqrt(at.strength / .42)), ink: L.ink});
   }
-  if (!L.key) return {dx: 0, dy: 0, alpha: 0, ink: L.ink};
-  const K = L.key, vx = x - K.x, vy = Math.max(6, y - K.horizon), n = Math.hypot(vx, vy);
-  return {dx: vx / n * K.long, dy: vy / n * K.long, alpha: K.shadow * (1 - (L.veiled || 0) * .85), ink: L.ink};
+  return out;
 }
 // Lays a sprite's silhouette on the ground: each row, the higher it is, the farther along the shadow.
 // X, Y: the sprite's corner. foot: the row that stands on the ground. baseY: where the ground is.
@@ -924,12 +930,16 @@ function castShadow(k, cv, X, Y, foot, baseY, sd){
   k.g.globalAlpha = 1;
   g.clearRect(x0, y0, x1 - x0, y1 - y0);
 }
-// Something standing on the ground at (X + width / 2, footY), in canvas pixels: shadow, then sprite
+// All of its shadows, one for each light that throws one
+function castShadows(k, cv, X, Y, foot, baseY, L, x, y){
+  for (const sd of shadowsOf(L, x, y)) castShadow(k, cv, X, Y, foot, baseY, sd);
+}
+// Something standing on the ground at (X + width / 2, footY), in canvas pixels: shadows, then sprite
 function onGround(k, cv, X, Y, foot = cv.height){
   const L = k.light;
   if (!L) return blit(k, cv, X, Y);
   const gx = (X + cv.width / 2) / HD, gy = (Y + foot) / HD;
-  castShadow(k, cv, X, Y, foot, Y + foot, shadowOf(L, gx, gy));
+  castShadows(k, cv, X, Y, foot, Y + foot, L, gx, gy);
   blit(k, cv, X, Y);
 }
 // Water shows what's above it: a sprite's rows upside down from the waterline, broken by ripples
@@ -1816,7 +1826,7 @@ function birdLife(k, t, dt, key, n, perches, kinds, opts = {}){
     if (b.state === 'in' || b.state === 'out') b.dir = (b.state === 'in' ? b.spot.x - b.x : b.to.x - b.x) >= 0 ? 1 : -1;
     const cv = birdSprite(b.kind, frame, b.dir), X = Math.round(b.x * HD) - 7, Y = Math.round((b.y - (b.hop || 0)) * HD) - cv.height;
     // on the ground it has a shadow, which comes away from its feet when it hops
-    if (b.state === 'perch' && b.perch.ground && k.light) castShadow(k, cv, X, Y, cv.height, Math.round(b.y * HD), shadowOf(k.light, b.x, b.y));
+    if (b.state === 'perch' && b.perch.ground && k.light) castShadows(k, cv, X, Y, cv.height, Math.round(b.y * HD), k.light, b.x, b.y);
     blit(k, cv, X, Y);
   }
 }
@@ -1879,8 +1889,8 @@ function fishJumps(k, t, dt, key, x0, x1, y0, y1){
 
 // ======== night animals, fire and cats ========
 // ---- night animals ----
-// Seen by firelight at the edge of the clearing: dark shapes, warmer on the side the fire is.
-const FOX_PALS = [{k:'#07060c', o:'#3a2420', O:'#2a1a1a', w:'#5a5058', d:'#0e0a10', D:'#08060c', e:'#ffe08a'}, {k:'#120a0c', o:'#a85a28', O:'#7a3e1c', w:'#e0c8a8', d:'#2a1612', D:'#1a0e0e', e:'#ffe9a0'}];
+// In their own colours: blit dims them in the dark and warms them near the fire.
+const FOX_PAL = {k:'#120a0c', o:'#a85a28', O:'#7a3e1c', w:'#e0c8a8', d:'#2a1612', D:'#1a0e0e', e:'#ffe9a0'};
 function foxAt(step, stand){
   const a = stand ? 0 : Math.sin(step * TAU / 4) * 2.2, b = stand ? 0 : Math.cos(step * TAU / 4) * 2.2;
   return (x, y) => {
@@ -1897,7 +1907,7 @@ function foxAt(step, stand){
     return '';
   };
 }
-const DEER_PALS = [{k:'#07060c', o:'#2c2224', O:'#201a1e', w:'#54505a', n:'#08060c', e:'#ffe9b0'}, {k:'#120a0c', o:'#8a5a34', O:'#6a4226', w:'#d8c4a4', n:'#20140e', e:'#fff0c0'}];
+const DEER_PAL = {k:'#120a0c', o:'#8a5a34', O:'#6a4226', w:'#d8c4a4', n:'#20140e', e:'#fff0c0'};
 function deerAt(step, graze, earFlick){
   const a = Math.sin(step * TAU / 4) * 2.4, b = Math.cos(step * TAU / 4) * 2.4, hx = graze ? 26 : 26.5, hy = graze ? 23.4 : 5.2;
   return (x, y) => {
@@ -2057,7 +2067,7 @@ function foxSight(){
     const moving = paused <= 0;
     if (!stopped && (dir > 0 ? x > stopAt : x < stopAt)){ stopped = true; paused = 2.4 + Math.random() * 2.6; }
     if (moving){ x += dir * 19 * dt; step += dt * 9; } else paused -= dt;
-    const frame = moving ? Math.floor(step) % 4 : 0, cv = shapeSprite(`fox${frame}${moving ? '' : 's'}`, 26, 14, foxAt(frame, !moving), FOX_PALS[1], dir, 'dD');
+    const frame = moving ? Math.floor(step) % 4 : 0, cv = shapeSprite(`fox${frame}${moving ? '' : 's'}`, 26, 14, foxAt(frame, !moving), FOX_PAL, dir, 'dD');
     onGround(k, cv, x * HD, y * HD - 14);
     return dir > 0 ? x < SW + 30 : x > -30;
   };
@@ -2074,7 +2084,7 @@ function deerSight(){
     else if (stage === 4){ x -= dir * 8 * dt; step += dt * 4; }
     flick = stage === 2 && Math.sin(clock * 4) > .7;
     const face = stage === 4 ? -dir : dir, frame = stage === 0 || stage === 4 ? Math.floor(step) % 4 : 0, graze = stage === 1 || stage === 3;
-    const cv = shapeSprite(`deer${frame}${graze ? 'g' : ''}${flick ? 'f' : ''}`, 32, 28, deerAt(frame, graze, flick), DEER_PALS[1], face);
+    const cv = shapeSprite(`deer${frame}${graze ? 'g' : ''}${flick ? 'f' : ''}`, 32, 28, deerAt(frame, graze, flick), DEER_PAL, face);
     onGround(k, cv, x * HD, y * HD - 27);
     return stage < 4 || (dir > 0 ? x > -36 : x < SW + 36);
   };
@@ -2091,7 +2101,7 @@ function rabbitSight(){
       if (phase >= 1){ phase = 0; if (++hops % (2 + Math.floor(Math.random() * 3)) === 0) wait = .7 + Math.random() * 2.2; }
     }
     const cv = shapeSprite('rabbit' + pose, 12, 10, rabbitAt(pose), RABBIT_PAL, dir), L = k.light;
-    if (L) castShadow(k, cv, x * HD, (y - lift) * HD - 9, 10, y * HD, shadowOf(L, x + 3, y));
+    if (L) castShadows(k, cv, x * HD, (y - lift) * HD - 9, 10, y * HD, L, x + 3, y);
     blit(k, cv, x * HD, (y - lift) * HD - 9);
     return dir > 0 ? x < SW + 10 : x > -10;
   };
@@ -2235,7 +2245,7 @@ function heroDraw(k, c, p, X, Y, foot, ground){
   // firelight comes and goes
   const level = lit && lit.flicker ? Math.floor(vnoise(life.clock * 7, 5, 1, 19) * 2.99) : 1;
   // their shadow, cast from their real shape, so a walker's legs scissor in it
-  if (L && ground !== undefined) castShadow(k, rigFrame(c, p, 1, lit, level), X - RIG_X, Y - RIG_Y, foot, Math.round(ground * HD), shadowOf(L, X / HD + 6, ground));
+  if (L && ground !== undefined) castShadows(k, rigFrame(c, p, 1, lit, level), X - RIG_X, Y - RIG_Y, foot, Math.round(ground * HD), L, X / HD + 6, ground);
   rigDraw(k.g, c, p, X, Y, 1, lit, level);
   // k.holding: something they keep in hand whenever an action isn't giving them something else
   const prop = a && a.prop || k.holding;
@@ -2864,9 +2874,10 @@ function addAction(name, list){
 
 // ======== running a place ========
 // Runs a place on a canvas of DW x DH, the way the app does: wind, life, the place itself, then
-// any puffs and sparkles. Optional: who ('guy' or 'girl'), seated (false for someone walking),
-// walking (true moves the ground under them at speed, in logical pixels a second). If you need to
-// crop it, scale it or pause it off screen, write your own loop: this one is only eighteen lines.
+// any puffs and sparkles. Optional: who ('guy' or 'girl', or null for a place with nobody in it),
+// seated (false for someone walking), walking (true moves the ground under them at speed, in logical
+// pixels a second). If you need to crop it, scale it or pause it off screen, write your own loop: this
+// one is only twenty lines. Keep k.live = true in yours, or rare() never brings anything on.
 function runPlace(canvas, id, {who = 'guy', seated = true, walking = false, speed = 9} = {}){
   canvas.width = DW; canvas.height = DH;
   const g = canvas.getContext('2d'), k = ck(g);
@@ -2882,9 +2893,9 @@ function runPlace(canvas, id, {who = 'guy', seated = true, walking = false, spee
     scene.speed = speed * scene.walk;
     scene.scroll += dt * scene.speed;
     if (!reduceMotion) windTick(now, dt);
-    lifeTick(dt, id, who, seated);
+    if (who) lifeTick(dt, id, who, seated); else life.clock += dt;
     PLACES[id].draw(g, now, dt, k);
-    lifeFxDraw(k, dt);
+    if (who) lifeFxDraw(k, dt);
     scene.beat *= Math.pow(.02, dt); scene.q *= Math.pow(.01, dt);
     requestAnimationFrame(frame);
   }

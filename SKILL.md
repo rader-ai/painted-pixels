@@ -19,7 +19,7 @@ Paths here are from this skill's own folder, wherever it's installed.
 
 **If you're only asked what's wrong with a scene:** look at it first, go through the questions below, and describe what's off in plain words, biggest first. Then fix it, if asked.
 
-**A guide may name something the kit doesn't have,** like `drawSurf` or `torchLight`. That's one world's own code from Lofi Studio, and you can read it as an example at https://github.com/rader-ai/lofi-studio/blob/main/index.html.
+**A guide may name something the kit doesn't have,** like `drawSurf`, `drawFolk` or `torchLight`. That's one world's own code from Lofi Studio, and you can read it as an example at https://github.com/rader-ai/lofi-studio/blob/main/index.html.
 
 To look at your work, run `npm install` once in `scripts/`, then use `scripts/look.mjs`. See `references/checking.md`.
 

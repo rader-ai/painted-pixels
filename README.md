@@ -89,9 +89,14 @@ A person feels alive through small human moments. They wink at you, yawn, sneeze
 </tr>
 </table>
 
-And each place gives them something to do. At the campfire, the marshmallow catches. They wave it, blow it out, shrug, and eat it anyway.
+And each place gives them something to do.
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/media/marshmallow-still.webp"><img src="docs/media/marshmallow.webp" width="100%" alt="Someone on a log holds a marshmallow on a stick over the fire. It catches, they wave it about, blow it out, and eat it"></picture>
+<table>
+<tr>
+<td width="50%" valign="top"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/media/marshmallow-still.webp"><img src="docs/media/marshmallow.webp" width="100%" alt="Someone on a log holds a marshmallow on a stick over the fire. It catches, they wave it about, blow it out, and eat it"></picture><br>At the campfire, the marshmallow catches. They wave it, blow it out, shrug, and eat it anyway.</td>
+<td width="50%" valign="top"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/media/fishing-still.webp"><img src="docs/media/fishing.webp" width="100%" alt="Someone fishing from a dock at night in the rain feels a tug on the line and reels in a fish"></picture><br>On the dock in the rain, something finally takes the bait.</td>
+</tr>
+</table>
 
 <br>
 
@@ -157,7 +162,7 @@ references/           a guide to each element, and an index of the kit
 assets/kit.js         the whole painting toolkit in one file
 assets/starter.html   a small complete world to copy
 assets/examples/      a whole scene for a web page, made with this skill
-assets/gallery/       real crops from the app: what good looks like, and what it used to look like
+assets/gallery/       real crops from the app, then and now
 scripts/look.mjs      looks at any page up close, on a clock you can step
 docs/                 the pictures on this page, and the scripts that record them
 ```

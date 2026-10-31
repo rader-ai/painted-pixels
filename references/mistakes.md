@@ -22,6 +22,8 @@ Each of these shipped, or nearly did. Most were spotted by someone looking at th
 | Bench, lamp and observatory lit from the wrong side | Bevels and domes always lit top-left | `p.sun` |
 | A tower's lit edge stayed put after it passed under the moon | Painted once into a scrolling layer | Draw that edge fresh each frame |
 | Bright white gulls at sunset, and a fox that flipped between two palettes | Sprites ignored the light they were in | `blit`: natural colours, lit where they are |
+| Shadows that snapped round at the edge of a fire's reach | The strongest light took over completely, as soon as it reached at all | One shadow for each light, the nearer one's growing with how close you are |
+| A person and a fox fully lit while a cloud darkened everything else | The dimming was painted over the background, before they were drawn | Call `skyDim` after whatever the sun or moon lights, and before anything with its own light |
 | A flat little bar under everyone, whichever way the light was | A shadow with no direction | `castShadow`: their real shape, running away from the point under the light |
 | A hard black stripe under the log | A flat shadow at one darkness, with a ruled edge | Thin it along its length, and use a dark flat glow for something soft |
 | A brown rectangle under the campfire | `p.texture` fills a box, and nobody looked at where it ended | Shape worn ground from a distance plus noise, so the grass gives way to it unevenly |

@@ -4,9 +4,10 @@
 //
 //   node look.mjs shot   [common] [--at 5] [--zoom 2] --out a.png            one frame
 //   node look.mjs strip  [common] --n 12 --gap .5 [--crop x,y,w,h|hero] [--zoom 3] [--cols 3] --out a.png
-//                                                                            frames across time
-//   node look.mjs clip   [common] --seconds 6 [--gap .06] [--speed 4] [--skip 3] [--actat 2] [--loop 8]
-//                        [--crop x,y,w,h|hero] [--zoom 2] --out folder       a recording, as numbered PNGs
+//                                                                            frames across time, --gap seconds apart
+//   node look.mjs clip   [common] --seconds 6 [--gap .06] [--loop 8] [--crop x,y,w,h|hero] [--zoom 2] --out folder
+//                                                                            a recording, as numbered PNGs, --gap seconds apart
+//                                                                            (played back at 60 ms a frame, a bigger gap is a time-lapse)
 //   node look.mjs probe  [common] --expr "LIGHTS.park.veiled" --n 60 --gap 2 a number over time, for what a picture can't show
 //   node look.mjs perf [common]                                            ms to draw a frame, and to paint a place
 //   node look.mjs phone  [common] [--at 1.5] --out a.png                     real size on a phone
@@ -20,8 +21,9 @@
 //         --place forest     which of PLACES to show (default: whatever the page shows; for perf, all)
 //         --who guy|girl     --rain (make it rain). --place and --who only mean something in Lofi Studio.
 //         --sight lane:name[,lane:name]   ask a rare() lane for a sight now, as in forestSky:comet
-//         --act name         start an action from ACTIONS now, as in smoreFire
-//         --seed 7           the same command gives the same pixels. In Lofi Studio this starts everything over,
+//         --act name         start an action from ACTIONS now, as in smoreFire. --actat 5 starts it 5 seconds in
+//         --at 8 --skip 3    wait 8 seconds, ask for the sight or action, wait 3 more, then start the pictures
+//         --seed 7          the same command gives the same pixels. In Lofi Studio this starts everything over,
 //                            once it has loaded. On your own page the clock is ours from the first line, so nothing is lost.
 //         --reduced          open the page as someone who prefers reduced motion
 // Crops are canvas pixels (the 640x300 canvas, not the 320x150 grid). `hero` crops around the person.
@@ -150,11 +152,12 @@ if (cmd === 'shot' || cmd === 'strip'){
   const {page, errors, done} = await open();
   await page.evaluate(takeOver, setup);
   const n = cmd === 'shot' ? 1 : +(opt.n || 8), gap = +(opt.gap || .5), zoom = +(opt.zoom || (cmd === 'shot' ? 2 : 3));
-  const b64 = await page.evaluate(({n, gap, zoom, crop, at, sight, act, cols: wanted}) => {
+  const b64 = await page.evaluate(({n, gap, zoom, crop, at, skip, sight, act, actat, cols: wanted}) => {
     const look = __look, src = look.canvas;
     look.warm(+at);
     if (sight) look.sight(sight);
-    if (act) look.act(act); else if (sight) look.quiet();
+    if (act) look.act(act, +actat); else if (sight) look.quiet();
+    look.warm(+skip);
     look.tick(.05);
     const c = crop === 'hero' ? [Math.round(scene.heroX * 2) - 40, Math.round(scene.heroY * 2) - 34, 150, 90]
       : crop ? String(crop).split(',').map(Number) : [0, 0, src.width, src.height];
@@ -169,7 +172,7 @@ if (cmd === 'shot' || cmd === 'strip'){
       if (n > 1){ g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(X, Y, 40, 16); g.fillStyle = '#fff'; g.fillText((i * gap).toFixed(1) + 's', X + 3, Y + 12); }
     }
     return cv.toDataURL('image/png').split(',')[1];
-  }, {n, gap, zoom, crop: opt.crop, at: opt.at || 3, sight: opt.sight, act: opt.act, cols: +opt.cols || 0});
+  }, {n, gap, zoom, crop: opt.crop, at: opt.at || 3, skip: opt.skip || 0, sight: opt.sight, act: opt.act, actat: opt.actat || 0, cols: +opt.cols || 0});
   await save(opt.out || 'look.png', b64);
   report(errors);
   await done();
@@ -177,13 +180,12 @@ if (cmd === 'shot' || cmd === 'strip'){
 
 if (cmd === 'clip'){
   // A recording, as numbered PNGs, to encode however you like: img2webp -loop 0 -lossless -min_size -d 60 frames/*.png -o a.webp
-  // --skip waits after asking for a sight or action, before recording starts. --actat starts the action part way through.
-  // --speed 4 is a time-lapse. --loop 8 dissolves the last 8 frames into what came just before the first, so there's no seam.
+  // --loop 8 dissolves the last 8 frames into what came just before the first, so there's no seam.
   const {page, errors, done} = await open();
   await page.evaluate(takeOver, setup);
   const dir = resolve(opt.out || 'clip'), gap = +(opt.gap || .06), n = Math.round(+(opt.seconds || 6) / gap);
   await mkdir(dir, {recursive: true});
-  await page.evaluate(({gap, speed, zoom, overlap, crop, at, skip, sight, act, actat}) => {
+  await page.evaluate(({gap, zoom, overlap, crop, at, skip, sight, act, actat}) => {
     const look = __look, src = look.canvas;
     look.warm(+at);
     if (sight) look.sight(sight);
@@ -195,7 +197,8 @@ if (cmd === 'clip'){
     const part = Object.assign(document.createElement('canvas'), {width: c[2], height: c[3]}), pg = part.getContext('2d', {willReadFrequently: true});
     const out = Object.assign(document.createElement('canvas'), {width: c[2] * zoom, height: c[3] * zoom}), og = out.getContext('2d');
     og.imageSmoothingEnabled = false;
-    const advance = () => { for (let s = 0; s < speed; s++) look.tick(gap); pg.drawImage(src, c[0], c[1], c[2], c[3], 0, 0, c[2], c[3]); };
+    // however far apart the frames are, the page sees small steps, or its own limit on a step would slow the scene down
+    const steps = Math.ceil(gap / .06 - 1e-6), advance = () => { for (let s = 0; s < steps; s++) look.tick(gap / steps); pg.drawImage(src, c[0], c[1], c[2], c[3], 0, 0, c[2], c[3]); };
     const lead = [], BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
     for (let i = 0; i < overlap; i++){ advance(); lead.push(pg.getImageData(0, 0, c[2], c[3])); }
     look.frame = (i, total) => {
@@ -211,7 +214,7 @@ if (cmd === 'clip'){
       og.drawImage(part, 0, 0, c[2] * zoom, c[3] * zoom);
       return out.toDataURL('image/png').split(',')[1];
     };
-  }, {gap, speed: +(opt.speed || 1), zoom: +(opt.zoom || 1), overlap: +(opt.loop || 0), crop: opt.crop, at: opt.at || 3, skip: opt.skip || 0, sight: opt.sight, act: opt.act, actat: opt.actat || 0});
+  }, {gap, zoom: +(opt.zoom || 1), overlap: +(opt.loop || 0), crop: opt.crop, at: opt.at || 3, skip: opt.skip || 0, sight: opt.sight, act: opt.act, actat: opt.actat || 0});
   for (let i = 0; i < n; i++) await save(join(dir, String(i).padStart(4, '0') + '.png'), await page.evaluate(([i, n]) => __look.frame(i, n), [i, n]));
   console.log(`${n} frames in ${dir}`);
   report(errors);
@@ -240,7 +243,7 @@ if (cmd === 'perf'){
   await page.evaluate(takeOver, setup);
   const res = await page.evaluate(({place}) => {
     const real = () => Performance.prototype.now.call(performance), g = __look.canvas.getContext('2d'), out = {};
-    const places = place || typeof VIBES === 'undefined' ? [place || 'this page'] : Object.keys(PLACES);
+    const known = typeof PLACES === 'undefined' ? [] : Object.keys(PLACES), places = place ? [place] : known.length ? known : ['this page'];
     for (const id of places){
       if (typeof VIBES !== 'undefined') activeSceneId = () => id;
       __look.warm(2);
@@ -249,7 +252,7 @@ if (cmd === 'perf'){
       for (let f = 0; f < 120; f++){ __look.tick(.033); g.getImageData(0, 0, 1, 1); }
       const frame = +((real() - t0) / 120).toFixed(2);
       // and the once-only painting, with sprite caches already warm
-      const pl = PLACES[id] || {}, t1 = real();
+      const pl = known.includes(id) ? PLACES[id] : {}, t1 = real();
       for (const part of ['sky', 'bg', 'front']) if (pl[part]) pl[part](painter());
       out[id] = {frame, paintOnce: Math.round(real() - t1)};
     }

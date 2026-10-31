@@ -15,7 +15,7 @@ Look at `../assets/gallery/light-campfire.png`, then `before-campfire.png` to se
 
 ## Say where it is first, as data
 
-Before painting anything, write the light down. Everything reads from this, so nothing can disagree.
+Before painting anything, write the light down. Everything reads from this, so nothing can disagree. Each place has one of these, and it goes on `k.light` for whatever's being drawn.
 
 ```js
 LIGHTS.forest = {id: 'f', dim: .66, tint: [14, 20, 52], tintAmt: .22,   // how dark it is, and the colour of the dark
@@ -25,6 +25,17 @@ LIGHTS.forest = {id: 'f', dim: .66, tint: [14, 20, 52], tintAmt: .22,   // how d
   key: {x: 60, horizon: 100, long: .9, shadow: .14, col: '#aebcf0'},     // the moon: where it hangs, and what its shadows do
   spots: [{x: 208, y: 122, r: 92, col: '#ff8a40', long: 1.15, shadow: .36, fire: true}]};   // the fire
 ```
+
+| Field | What it is |
+|---|---|
+| `id` | A short name, different for each place. Sprites lit here are kept under it |
+| `dim`, `tint`, `tintAmt` | How dark a person is here, and the colour of the dark |
+| `far` | How dim a sprite is, away from every lamp and fire |
+| `rim`, `rimAmt`, `side` | The light on someone: its colour, its strength, and its side (-1 is left, 1 is right). `rim2`, `rimAmt2` and `side2` are the same for a second light. `flicker` makes it move with the flames |
+| `ink` | The colour of a shadow |
+| `seat` | The ground under a seated person, so that they can cast a shadow. Leave it out when there's no ground there |
+| `key` | The sun or moon. `x` is where it hangs across the frame, `horizon` is the row on the ground under it, `long` is how far a shadow runs for each pixel of height, `shadow` is how dark, and `col` is its colour |
+| `spots` | Each lamp or fire. `x` and `y` are where it meets the ground, because shadows run away from that point: for a lamp, that's its foot and not its head. `r` is how far it reaches, and a little less up and down the screen, because you're seeing the ground from low down. `col`, `long` and `shadow` are as for the key. `fire` makes its shadows flicker |
 
 ## The kinds of light in a scene
 
@@ -52,10 +63,10 @@ A place usually has a key that's high and cool and a local light that's low and 
 - A shadow has the shape of the thing that casts it. A walker's legs scissor in theirs.
 - It thins toward the far end.
 - It's the colour of the sky, not black (`ink`).
-- A second light gives a second shadow. A fire's flickers with the flames.
+- A second light gives a second shadow, and `shadowsOf` gives you both. A fire's flickers with the flames, and it strengthens as you get closer, so it doesn't snap on at the edge of the light's reach. Close to the fire, it washes the moon's shadow out.
 - When a cloud covers the light, the shadow fades.
 
-**Something that blocks the light takes it from what's behind.** A log throws a shadow away from the fire. A cloud over the sun dims everything it was falling on, moving things included, and the shadows soften until it passes.
+**Something that blocks the light takes it from what's behind.** A log throws a shadow away from the fire. A cloud over the sun dims everything it was falling on, moving things included, and the shadows soften until it passes. `skyDim` does this by painting over whatever's been drawn so far, so call it after everything the sun or moon lights, and before anything with its own light, like a fire or a torch.
 
 **Smooth things reflect like mirrors.** Water, wet sand, glass and polished wood show what's opposite them, not the colour of the light.
 
@@ -91,7 +102,7 @@ A place usually has a key that's high and cool and a local light that's low and 
 | Trunks and branches | `sun` picks the lit side | `stroke` |
 | Buildings, boxes, planks, domes | `p.sun = 1` before painting, when the light's on the right. It's the top and left by default | `p.box`, `p.wood`, `p.dome` |
 | Buildings that scroll | The bright edge changes sides as they pass under the source, drawn fresh each frame | `KEEP_EDGES` in `castle.draw` |
-| Ground | `opts.light(x, y)` adds or takes light at any spot: tree shade, a lamp's pool | `p.lawn` |
+| Ground | `opts.light(x, y)` adds or takes light at any spot: tree shade, a lamp's pool. The campfire's is about .7 at its brightest; a lamp's may want more | `p.lawn` |
 | Stones and logs | A smaller highlight offset toward the light | see the fire pit in `forest.bg` |
 | Tent, walls, big flat things | Brightness from the side nearest the light, and a sliver of the other light on the far edge | see the tent in `forest.bg` |
 | Water | Mirror, tint and ripple. Road of light. Reflected clouds use `lighter` at low alpha | `p.reflect`, `mirrorRows` |
@@ -107,11 +118,11 @@ A place usually has a key that's high and cool and a local light that's low and 
 lightAt(L, x, y)                 // how much local light reaches here (0 to 3), from which side, and which light
 blit(k, cv, X, Y)                // draws a sprite as it looks right there: use this for every creature
 litSprite(cv, L, level, side)    // the same sprite in that light, worked out once and kept
-onGround(k, cv, X, Y)            // its shadow, then the sprite
-shadowOf(L, x, y)                // which way a shadow falls from here, and how dark
-castShadow(k, cv, X, Y, foot, baseY, shadowOf(...))    // lays its real silhouette on the ground
+onGround(k, cv, X, Y)            // its shadows, then the sprite
+shadowsOf(L, x, y)               // every shadow it throws from here: which way, and how dark
+castShadows(k, cv, X, Y, foot, baseY, L, x, y)         // lays its real silhouette on the ground, once for each light
 mirrorRows(k, cv, X, waterY, alpha, t, n)              // its reflection, broken by ripples
-skyDim(k, key, cover, dt, colour, amount, L)           // a cloud over the source takes light off everything
+skyDim(k, key, cover, dt, 'r,g,b', amount, L)          // cover comes from cloudDeck; takes light off everything drawn so far
 motes(k, t, dt, key, n, x0, x1, y0, y1, inLight)       // dust you can only see where light falls through it
 sunRays(k, t, id, x, y, len, col, a)                   // rays in the haze
 ```
@@ -149,7 +160,7 @@ Do this on the screen, one thing at a time. A wrongly lit tree looks fine at a g
 - [ ] **Follow a line from the light to each thing.** Is its bright side on that side? Do this for clouds, mountains, trees, buildings, people and animals.
 - [ ] **Follow the line through each thing to the ground.** Is its shadow on the far side, and fanning the right way?
 - [ ] **Move it.** Film a strip of something crossing the frame, or crossing a light. Does its lit edge change? Does it warm and cool? Does its shadow swing?
-- [ ] **Cover the source.** Force a cloud across it. Does the land dim, and do the shadows fade?
+- [ ] **Cover the source.** Find a moment when a cloud crosses it, with `look.mjs probe --expr "LIGHTS.hill.veiled" --n 100 --gap 2`, then make a strip with `--at` set to that time. Does the land dim, do moving things dim with it, and do the shadows fade? If no cloud ever crosses, narrow the clouds' band around the source (`y0` and `y1`) or add one.
 - [ ] **What in this frame is smooth or wet?** Does it show what's opposite it?
 - [ ] **What's in the air?** Smoke, rain, dust, mist. Does it catch the light it passes through?
 - [ ] **Is anything black?** Shadows should have the colour of the sky.
