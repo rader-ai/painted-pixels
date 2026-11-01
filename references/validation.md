@@ -12,7 +12,7 @@ node path/to/this/skill/scripts/validate.mjs --page lofi-studio/index.html --pla
 node path/to/this/skill/scripts/validate.mjs --page lofi-studio/index.html --place all
 ```
 
-It writes into a `quest` folder next to the page, and paths you give it are from the folder you're in. A full check takes about three and a half minutes for one scene. It plays every rare sight and action to its end, then runs on for a while, watching for what only goes wrong after minutes. At the end it lists what it couldn't check, and why. A rule it couldn't check isn't a rule that passed.
+It writes into a `quest` folder next to the page, and paths you give it are from the folder you're in. A full check takes a few minutes for one scene. It plays every rare sight and action to its end, then runs on for a while, watching for what only goes wrong after minutes. At the end it lists what it couldn't check, and why. A rule it couldn't check isn't a rule that passed.
 
 | Flag | What it does |
 |---|---|
