@@ -23,10 +23,19 @@ A wall shaded evenly looks flat however good its texture is. Shade the whole wal
 ## Windows
 
 - A window at night is a warm pane with a brighter top, a dark bar, a glow painted outside it, and a ledge below.
-- Inside a building, keep the frame in front of whatever's seen through it: draw the view, then the room with the opening in it, then the moving things in the view clipped to the opening, and then redraw the window bars on top.
+- **A room with a window is two layers, and the room's on top.** Paint the view in `sky` and `bg`. Paint the room in `front`, all of it, and cut the window out of it with `p.clear`. Then draw, in this order: the view, anything that moves out there, rain, the glass, `placeFg`, and whatever moves in the room. That way nothing outside can ever land on the room. Clipping the outside to the window's rectangle isn't enough, because a chair or a screen standing in front of the window is inside that rectangle: it's how we got rain falling through a TV and a bus driving through a booth. Semi-transparent paint in the hole of `front` goes over everything outside, which is how to do a reflection, or a shadow on the road that buses drive through.
 - **Daytime rooms are lit from the window**, and it reads through the warm/cool contrast. Its light falls across the floor toward us, with the shadow of the window's bar in it, and dust shows inside it (see the cafe).
 - **At night the glass shows the room:** a faint ghost of the lamp and screen over the city, drawn inside the window's clip.
 - A window in a far building is 1 or 2 pixels plus a low glow. Lit at random, some of them blue like a TV.
+
+## A street
+
+The street outside the coffee shop is the opposite of a city at night: close up, in daylight, and the fronts face you. What makes it more than a row of boxes:
+
+- **The sun comes from somewhere.** High, behind us and to the left, so whatever stands out of a wall throws a short shadow down and to the right: sills, heads, cornices, fire escapes, awnings.
+- **Every building's a different kind of building.** Brick, limestone, painted plaster. Arched windows, shutters, a band of stone between floors. A shop at the bottom with its own sign and awning, and what it sells in the window.
+- **A wall that isn't facing you** shows where one building stands taller than the next: it runs off toward the street's vanishing point, bright if it faces the sun and dark if it doesn't.
+- **What stands at the kerb** breaks it all up: a tree with a real crown, a lamp post, a hydrant, a bus stop. They're nearer than whoever's walking along the pavement.
 
 ## A city
 
@@ -35,6 +44,17 @@ A wall shaded evenly looks flat however good its texture is. Shade the whole wal
 - **One lens.** Lay the blocks out in rows on the ground, project them with a small perspective function (`x = horizonX + (wx - horizonX) * scale`, with `scale` shrinking with distance), and paint their faces and roofs from that. It's painted once, so it costs nothing per frame. An avenue running straight out to the horizon gives you more depth than anything else you can draw.
 - **Air.** Far buildings turn toward the sky behind them, and their windows shrink to dots.
 - **Mostly asleep.** Whole floors are lit together, most buildings are nearly dark, and a few windows are blue like a TV. Evenly scattered lights look like a pattern.
+
+## Nothing's a box
+
+A bus, a chair, a screen, a cooler: if you've drawn a rectangle with a colour in it, you haven't drawn anything yet. "Everything is ugly squares" is how that looks to everyone else, and rule D7 measures it. For each thing, ask what it really is and what shape that makes:
+
+- **Give it a form.** `p.form(X0, Y0, X1, Y1, ramp, shape, opts)` paints any shape along a ramp, and turns its edges toward the light or away. `sdBox(X, Y, x0, y0, x1, y1, r)` gives you a rounded box to start from. `shape` can be anything that says how far outside it a pixel is, so a tapered pot or a padded seat takes one line.
+- **Then make it the real thing.** A booth has a curved back, tuck-and-roll channels, piping, brass nails, a cushion with a worn front edge, and a kicker scuffed by shoes. A bus has a roof pod, people in its windows, doors you could get on by, and a line where the panels meet. A desk chair has five feet on casters.
+- **Turn it.** A screen that faces whoever's using it is a trapezoid, taller at its near edge, and that alone tells you where the person is.
+- **Put something on it.** A marble table with half a croissant and a bud vase says more than the table does. A calendar with one day ringed, a long way off, says more than a wall.
+
+`paintCafeRoom` and `paintOfficeRoom` in Lofi Studio are worked examples, one brush per thing.
 
 ## Rooms
 
@@ -46,7 +66,7 @@ A room is the same job as a landscape:
 4. **What the light lands on:** a screen tints the polished desk under it, a lamp makes a pool, and `motes` shows dust inside a lamp's cone.
 5. **Small steady movements:** steam off the mug, cat on the shelf, a barista working behind the counter, the coffee machine's breath, people passing outside, cars.
 
-Keep the floor simple: a few plank lines or a checker, one rug. Most of the eye belongs higher up.
+Keep the floor simple, and in the room's own perspective: `s = (Y - vy) / (F - vy)`, then `wx = (X - vx) / s` for across and `wz = K / s` for away gives you tiles or planks that run to one point. Keep their contrast low, or the floor shouts. Most of the eye belongs higher up.
 
 ## Scrolling buildings
 

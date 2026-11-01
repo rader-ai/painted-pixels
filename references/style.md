@@ -23,6 +23,7 @@ Hi-bit pixel art drawn entirely in code: small pixels, deep colour, and a place 
 | Small human moments | Bouncing to the beat |
 | Now and then, something you didn't expect | Constant spectacle |
 | Many small lit parts, shaded as one form | Balls, spheres, stickers |
+| Built things with a form, and something on them | A box with a colour in it |
 
 ## Five ideas that decide everything else
 
@@ -60,14 +61,14 @@ Hi-bit pixel art drawn entirely in code: small pixels, deep colour, and a place 
 
 | World | Family, and accent | Colours | Hue shift | Biggest flat patch | Darkest, brightest | Warm pixels |
 |---|---|---|---|---|---|---|
-| Castle | Violet night, warm windows | 1,619 | 13° | 2.7% | `#07040f`, `#bcabe4` | 2% |
-| Rainy office | Plum and navy, amber lamp | 1,065 | 25° | 1.9% | `#100a18`, `#c2a04a` | 21% |
-| Corner booth | Warm brown, blue daylight | 933 | 16° | 0.8% | `#1f1410`, `#6aa4dc` | 89% |
-| Garden | Greens and morning blue, gold sun | 698 | 24° | 2.4% | `#0b1514`, `#dadcd1` | 27% |
-| Campfire | Navy, orange fire | 2,368 | 11° | 2.3% | `#020408`, `#6a7cac` | 12% |
-| Lake | Deep blue, silver moon | 1,927 | 9° | 1.7% | `#040518`, `#2c3b72` | 3% |
-| Park | Greens and sky, pink blossom | 457 | 20° | 2.8% | `#160d14`, `#f4f5f6` | 10% |
-| Beach | Violet sea, gold sun | 1,168 | 26° | 1.7% | `#22143a`, `#fff6fb` | 47% |
+| Castle | Violet night, warm windows | 1,538 | 13° | 2.7% | `#07040f`, `#bcabe4` | 2% |
+| Rainy office | Plum and navy, amber lamp | 4,161 | 23° | 2.7% | `#08050b`, `#6e482a` | 34% |
+| Corner booth | Warm brown, blue daylight | 2,456 | 16° | 1.7% | `#12090b`, `#619cd8` | 85% |
+| Garden | Greens and morning blue, gold sun | 659 | 25° | 2.4% | `#0b1514`, `#d3dad8` | 26% |
+| Campfire | Navy, orange fire | 2,516 | 12° | 2.3% | `#020408`, `#3e4c7c` | 12% |
+| Lake | Deep blue, silver moon | 2,185 | 10° | 1.7% | `#040518`, `#2c3b72` | 2% |
+| Park | Greens and sky, pink blossom | 470 | 19° | 2.8% | `#160d14`, `#f4f5f6` | 10% |
+| Beach | Violet sea, gold sun | 1,358 | 26° | 1.7% | `#22143a`, `#fff6fb` | 47% |
 
 Brightest here means the brightest of the 48 colours covering the most frame, so the real sparks go higher. Notice how little warm there is at night: a few percent of warm is what makes it feel like firelight.
 
@@ -113,7 +114,7 @@ Four kinds in any scene: the **key** (the sun or moon, which sets the shape of e
 | A lit window | On for 2 to 5 minutes, off for 40 seconds to 2 minutes |
 | A rare sight | Every 6 seconds to 1.5 minutes, depending on what it is |
 
-**How much moves.** In a run of 24 seconds, between 7% and 49% of the frame moved at some point in a world where nobody walks, and at any one moment it's under 2% of the frame, usually much less. In a world where someone walks, about 80% of the frame passes by. See `depth-and-motion.md`.
+**How much moves.** In a run of 24 seconds, between 8% and 49% of the frame moved at some point in a world where nobody walks, and at any one moment it's under 2% of the frame, usually much less. In a world where someone walks, about 80% of the frame passes by. See `depth-and-motion.md`.
 
 ## People
 

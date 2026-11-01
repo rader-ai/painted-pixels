@@ -63,7 +63,7 @@ Without `--page`, it opens the nearest `index.html` going up from where you are.
 - Does it steal attention from what should have it?
 - Put the world's own gallery picture next to it. Is it the same quality as what's around it?
 
-**3. At real size: does it read?** `look.mjs phone`. A person is about 25 points tall.
+**3. At real size: does it read?** `look.mjs phone`. A person is about 25 points tall. While you're at that size, ask whether the person's the right size for what's around them: a mug should be smaller than their head, their feet should be near the floor, and everything that stands on something should touch it and darken it.
 
 - Can you tell what it is?
 - Does the gesture show in the silhouette?
@@ -77,6 +77,7 @@ You can't watch a video here, so judge motion from strips, and be honest that th
 - **Strip across a long time:** take frames many seconds apart. Is most of it still in most of them? If everything has moved in every frame, it's too busy.
 - **Numbers:** for "does this move on the beat", measure instead of guessing: record the pose values over 40 seconds and compare the average position on and off the beat. For wind, sample `WIND(x)` over a few minutes and see how much of the time it's near zero. `look.mjs probe --expr "WIND(100)" --n 120 --gap 2` prints any value over time.
 - **Compare neighbours:** diff two frames to see exactly what's changed. If the moon's moved more than the grass, something's wrong.
+- **Where does nothing move?** For "it feels static", the "what moved" panel in the referee's `sheet.png` shows it at a glance, and `run.parts` in its `report.json` gives the numbers. A scene can pass the 5% in rule M1 on fireflies alone, while its sky and water stand still.
 - **Say what you couldn't check.** A strip tells you about poses and timing, but not how it feels. When handing work over, say so, and say which things are most likely to need tuning.
 
 ## Before calling it done

@@ -82,8 +82,9 @@ const takeOver = ({place, who, rain, seed}) => {
     state = makeState(PRESETS[VIBES.find(v => VIBE_PLACE[v] === place) || VIBES[0]]);
     state.seed = 4242;
   }
-  if (place && inApp) activeSceneId = () => place;
-  if (who && inApp) charPick = who;
+  // an older copy of the app has these without the rest
+  if (place && typeof activeSceneId !== 'undefined') activeSceneId = () => place;
+  if (who && typeof charPick !== 'undefined') charPick = who;
   if (rain) state.layers.rain.on = true;
   if (typeof life !== 'undefined') life.awake = true;
   if (seed && inApp){
@@ -114,8 +115,13 @@ const takeOver = ({place, who, rain, seed}) => {
 };
 
 async function open(extra = {}){
-  const file = findPage(), root = dirname(file), server = await serve(root), inApp = /\bconst VIBES\b/.test(await readFile(file, 'utf8'));
-  if (!inApp && (opt.place || opt.who)) console.log('Note: --place and --who only mean something in Lofi Studio. On your own page, change the page.');
+  const file = findPage(), root = dirname(file), text = await readFile(file, 'utf8'), inApp = /\bconst VIBES\b/.test(text);
+  // better to stop than to hand back a nice picture of the wrong world
+  if ((opt.place && !/\bactiveSceneId\b/.test(text)) || (opt.who && !/\bcharPick\b/.test(text))){
+    console.log('--place and --who only mean something in Lofi Studio. On your own page, change the page.');
+    process.exit(1);
+  }
+  const server = await serve(root);
   const browser = await chromium.launch({channel: 'chrome', headless: true, args: ['--mute-audio']});
   const context = await browser.newContext({...(extra.context || {viewport: {width: 1280, height: 800}, deviceScaleFactor: 1}), ...(opt.reduced ? {reducedMotion: 'reduce'} : {})});
   const page = await context.newPage();
@@ -242,14 +248,16 @@ if (cmd === 'perf'){
   const {page, errors, done} = await open();
   await page.evaluate(takeOver, setup);
   const res = await page.evaluate(({place}) => {
-    const real = () => Performance.prototype.now.call(performance), g = __look.canvas.getContext('2d'), out = {};
+    const real = () => Performance.prototype.now.call(performance), out = {};
+    const pg = Object.assign(document.createElement('canvas'), {width: 1, height: 1}).getContext('2d', {willReadFrequently: true});
     const known = typeof PLACES === 'undefined' ? [] : Object.keys(PLACES), places = place ? [place] : known.length ? known : ['this page'];
     for (const id of places){
       if (typeof VIBES !== 'undefined') activeSceneId = () => id;
       __look.warm(2);
       const t0 = real();
-      // reading a pixel back makes the browser finish the drawing before the clock stops
-      for (let f = 0; f < 120; f++){ __look.tick(.033); g.getImageData(0, 0, 1, 1); }
+      // copying a pixel off to its own little canvas makes the browser finish the drawing before the clock stops.
+      // Reading the page's own canvas would too, but after a few hundred reads the numbers jump tenfold
+      for (let f = 0; f < 120; f++){ __look.tick(.033); pg.drawImage(__look.canvas, 0, 0, 1, 1, 0, 0, 1, 1); pg.getImageData(0, 0, 1, 1); }
       const frame = +((real() - t0) / 120).toFixed(2);
       // and the once-only painting, with sprite caches already warm
       const pl = known.includes(id) ? PLACES[id] : {}, t1 = real();
@@ -272,12 +280,14 @@ if (cmd === 'phone'){
     if (typeof VIBES !== 'undefined' && place) activeSceneId = () => place;
     if (typeof VIBES !== 'undefined' && who) charPick = who;
     const c = document.getElementById('viz') || document.querySelector('canvas'), r = c.getBoundingClientRect();
-    return {x: r.x, y: r.y, width: r.width, height: r.height, canvas: c.width};
+    // only what's in view: a page may crop a wide world by sliding the canvas along behind a window
+    const x = Math.max(0, r.left), y = Math.max(0, r.top);
+    return {x, y, width: Math.min(innerWidth, r.right) - x, height: Math.min(innerHeight, r.bottom) - y, shown: r.width, canvas: c.width};
   }, {place: opt.place, who: opt.who});
   await page.waitForTimeout(+(opt.at || 1.5) * 1000);
   await page.screenshot({path: opt.out || 'phone.png', clip: {x: box.x, y: box.y, width: box.width, height: box.height}});
-  const scale = box.width / box.canvas;
-  console.log(`canvas shows at ${box.width.toFixed(0)}x${box.height.toFixed(0)} points; one canvas pixel is ${scale.toFixed(2)} points. A person (24x41 canvas pixels) is about ${(24 * scale).toFixed(0)}x${(41 * scale).toFixed(0)} points.`);
+  const scale = box.shown / box.canvas;
+  console.log(`${box.width.toFixed(0)}x${box.height.toFixed(0)} points of it show${box.width < box.shown - 1 ? `, out of ${box.shown.toFixed(0)} across` : ''}; one canvas pixel is ${scale.toFixed(2)} points. A person (24x41 canvas pixels) is about ${(24 * scale).toFixed(0)}x${(41 * scale).toFixed(0)} points.`);
   report(errors);
   await done();
 }

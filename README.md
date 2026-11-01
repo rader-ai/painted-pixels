@@ -27,6 +27,8 @@ Then the frame gets blocked in with big flat shapes to check where the eye goes.
 <tr><td><img src="assets/gallery/before-campfire.png" alt="An early campfire: trees lit from the wrong side, a comb of flames, a still sky"></td><td><img src="assets/gallery/light-campfire.png" alt="The campfire now: trees silvered by the moon and warmed near the fire, a real fire, clouds with a silver lining"></td></tr>
 <tr><td><img src="assets/gallery/before-trees.png" alt="An early park: trees made of balls, a border of coloured dots"></td><td><img src="assets/gallery/light-park.png" alt="The park now: trees with limbs and leaves, grass, flowers in patches, hazy hills"></td></tr>
 <tr><td><img src="assets/gallery/before-beach.png" alt="An early beach: the sea ends in a thin line"></td><td><img src="docs/media/after-beach.png" alt="The beach now: a low sun with rays in the haze, a pier, foam and wet sand, long shadows on the dunes"></td></tr>
+<tr><td><img src="assets/gallery/before-cafe.png" alt="An early coffee shop: a window full of flat buildings with a grid of square windows, a booth made of red rectangles, panels of flat brown"></td><td><img src="assets/gallery/cafe.png" alt="The coffee shop now: a street of brick and limestone through the window, a tuck-and-roll booth with a marble table, a chalkboard, green lamps, a lever espresso machine"></td></tr>
+<tr><td><img src="assets/gallery/before-office.png" alt="An early office: a skyline of black rectangles, a monitor that's a dark box with rain falling across it, a chair that's a purple slab"></td><td><img src="assets/gallery/office.png" alt="The office now: a city running away down a wet avenue through the window, a screen turned toward the person, a chair on casters, a record player, a calendar with one day ringed"></td></tr>
 </table>
 
 <br>
@@ -102,11 +104,11 @@ And each place gives them something to do.
 
 <h2><img src="docs/media/plate-rules.png" width="100%" alt="A rule book and a referee"></h2>
 
-The style is written down, so nobody has to guess at it. [The style guide](references/style.md) says what it is and isn't, with the real numbers from all eight worlds. [The rule book](references/rules.md) has 44 rules. A **Law** can't be broken. A **Custom** can, if you say which one and why.
+The style is written down, so nobody has to guess at it. [The style guide](references/style.md) says what it is and isn't, with the real numbers from all eight worlds. [The rule book](references/rules.md) has 45 rules. A **Law** can't be broken. A **Custom** can, if you say which one and why.
 
 <img src="assets/gallery/style-do-dont.png" width="100%" alt="Five pairs from Lofi Studio's own history, not this and this: clouds with thickness that changes rather than a pile of balls, trees of many small lit parts rather than balls on a stick, one fire rather than a comb of flames, a shore with a wave's whole life rather than a line, and worn ground rather than a ruled edge">
 
-Then **a referee** checks the work. `scripts/validate.mjs` runs the scene in a muted browser, on a clock it steps by hand, and measures whatever can be measured: whether anything's blurred, whether the colours shift along their ramps, whether the person bounces to the beat, whether something appears out of nowhere, whether every rare sight ends by itself, and whether a cache grows until the page goes blank. That's 27 of the rules. The other 17 take judgement, like whether every bright side faces the moon, so it hands those back as a list to walk, with a sheet of what to look at. Rank S takes both.
+Then **a referee** checks the work. `scripts/validate.mjs` runs the scene in a muted browser, on a clock it steps by hand, and measures whatever can be measured: whether anything's blurred, whether the colours shift along their ramps, whether the person bounces to the beat, whether something appears out of nowhere, whether every rare sight ends by itself, and whether a cache grows until the page goes blank. That's 28 of the rules. The other 17 take judgement, like whether every bright side faces the moon, so it hands those back as a list to walk, with a sheet of what to look at. Rank S takes both.
 
 The forest on the day it got a scene of its own, and the forest now:
 
@@ -123,7 +125,9 @@ The forest on the day it got a scene of its own, and the forest now:
 | "i was hoping for subtle motion and feeling of being alive" | Nobody's on a life clock, in any world |
 | "the lights turning off and on in the castle seem too fast" | A beat changes 3.5% of the castle |
 | "I'm big on the lighting too" | The light isn't written down anywhere |
-| "the trees just look like balls" | Nothing. That's what the Eye rules are for |
+| "Everything is ugly squares", of the coffee shop | 10.3% of the frame was plain boxes, and 2.2% once it was repainted. That check exists because of that sentence |
+| "the rain in the office is appearing inside and in front of the TV" | Nothing. It takes someone looking, and that's what the Eye rules are for |
+| "the trees just look like balls" | Nothing, for the same reason |
 
 The [whole table](references/validation.md#why-these-numbers) is in the guide.
 
@@ -131,15 +135,15 @@ It found bugs that had shipped, too. A fishing rod at fractions of a pixel. Lamp
 
 <img src="docs/media/jump-cloud.webp" width="100%" alt="Two frames of a garden, one above the other, a twentieth of a second apart. In the second, a huge cloud has appeared in front of the sun from nothing">
 
-**It can't tell you a scene is beautiful.** A rank is a floor, not a compliment. [What it can't see](references/validation.md#what-it-cant-see) is written down too, and every check has [a page made to break it](scripts/fixtures), so that the referee gets checked as well.
+**It can't tell you a scene is beautiful.** A rank is a floor, not a compliment. All eight worlds had Rank A on the day someone looked at two of them and saw rain falling through a TV, a bus driving through a booth, and "everything is ugly squares". The repaint you can see above came from that sentence, and the rule that would have caught the rain was sitting there unticked, waiting for someone to look. [What it can't see](references/validation.md#what-it-cant-see) is written down too, and every check has [a page made to break it](scripts/fixtures), so that the referee gets checked as well.
 
 **And it talks like a party member.** While Claude's using this skill, it sounds like a small, cheerful companion at a 16-bit inn. It's seasoning: numbers, commands and anything you have to decide stay in plain words, it reports just as honestly, and it [drops the voice](references/voice.md) if something's really wrong or you ask it to.
 
-> ▶ Quest complete: Rank A, 25 of 25 checks cleared.
+> ▶ Quest complete: your rooftop garden is finished. Rank S: 27 of 27 machine checks clear, and I walked all 17 Eye rules with a note on each. Rank is a floor, not a compliment: it means nothing was found and somebody looked, not that it's beautiful.
 >
-> I walked the Eye list too, and 14 of the 17 are ticked. Three aren't: the walk, since nobody walks here, and two I can't judge without seeing it move.
->
-> Still in the fog: how the motion feels, because I judged it from frame strips, and how it runs on a real phone.
+> **Still in the fog:** how the motion feels (I judged it from strips, so the cat's and plane's pace, the window on/off rate and the string's sway are the likeliest to need tuning); real phones and Safari (Chrome emulation only).
+
+That's a real report, from the test below.
 
 <br>
 
@@ -175,7 +179,11 @@ Describe what you want, and Claude picks the skill up by itself. To call it by n
 - *This character looks pasted on*
 - *Check my scene against the rule book*
 
-Here's one it made outside the app, as a test: [a snowy cabin at dusk](assets/examples/cabin.html), with its own snow and mountains painted on top of the kit. Download the file and open it to see it move.
+To test it, a fresh Claude got that first request and nothing else but this skill. This is [its rooftop garden](assets/examples/rooftop): its own city, its own moths and its own cat on the wall, on top of the kit. It got Rank S, and it still said that the person is small, and "if you change one thing, make him bigger".
+
+<img src="assets/gallery/example-rooftop.png" width="100%" alt="A rooftop garden at night, high above a big city: someone in an orange hoodie on a bench under a small tree strung with lights, a lantern on the table beside them, and past the low wall, towers of lit windows running away down an avenue under a moon and silver-edged clouds">
+
+And [a snowy cabin at dusk](assets/examples/cabin.html), with its own snow and mountains. Download either one and open it to see it move.
 
 <img src="assets/gallery/example-cabin.png" width="100%" alt="A log cabin on a snowy hillside just after sundown, with someone on the lantern-lit porch holding a mug, the last sun on the peaks and a frozen lake beyond">
 
@@ -188,7 +196,7 @@ Claude reads these as it needs them, and they're written so that you can read th
 | Element | The short version | Guide |
 |---|---|---|
 | **The style** | What it is and isn't on one page, with the real numbers from all eight worlds | [style](references/style.md) |
-| **The rule book** | 44 rules, each a Law or a Custom, checked by machine or by eye | [rules](references/rules.md) |
+| **The rule book** | 45 rules, each a Law or a Custom, checked by machine or by eye | [rules](references/rules.md) |
 | **The referee** | How to run it, what the ranks mean, and what it can't see | [validation](references/validation.md) |
 | How we talk | A small, cheerful party member at a 16-bit inn. Facts stay plain | [voice](references/voice.md) |
 | The look | Decide where the eye goes first. Hue-shifted ramps, ordered dither, no blur, outlines only where they earn it | [look](references/look.md) |
@@ -209,7 +217,7 @@ SKILL.md              where Claude starts
 references/           a guide to each element, and an index of the kit
 assets/kit.js         the whole painting toolkit in one file
 assets/starter.html   a small complete world to copy
-assets/examples/      a whole scene for a web page, made with this skill
+assets/examples/      two whole scenes for a web page, made with this skill
 assets/gallery/       real crops from the app, then and now
 assets/dress.css      the panels, buttons and stat bars that go around a scene
 assets/fonts/         Press Start 2P and VT323, for that dress

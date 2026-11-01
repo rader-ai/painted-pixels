@@ -126,7 +126,7 @@ Nothing should repeat visibly. Vary size, lean, spacing and shade through noise,
 When a scene lives on a real page, rather than in an app with a fixed frame:
 
 - **Whole-number scale.** Every art pixel should be a whole number of device pixels, or the dither goes uneven: `scale = Math.round(width * devicePixelRatio / DW)`. `width: 100%` gives you 1.6 or 1.83, which looks soft and blotchy. `starter.html` does this properly. (Lofi Studio's own layout can't always manage it on phones, where the frame's size is set by the screen, and we've accepted that there.)
-- **Crop rather than shrink.** A phone should see the middle of the world larger, not all of it smaller. Keep what matters in the middle, and make the world wider than most screens need.
+- **Crop rather than shrink.** A phone should see the middle of the world larger, not all of it smaller. Keep what matters in the middle, and make the world wider than most screens need. See below.
 - **Melt into the page.** Paint the nearest ground in the page's own background colour, so that the scene has no bottom edge.
 - **Hold the space.** Give the canvas its height before it paints, so nothing below it jumps.
 - **Rest when nobody's looking.** Stop drawing when it's off screen (`IntersectionObserver`) or the tab is hidden.
@@ -136,8 +136,37 @@ When a scene lives on a real page, rather than in an app with a fixed frame:
 
 `assets/examples/cabin.html` does all of this, and `runPlace` doesn't: when you need any of it, write your own frame loop (it's short).
 
+### Cropping a wide world
+
+The canvas stays the whole world, and the page slides it along behind a window. That way a world position is still a canvas position, and nothing in your scene has to know.
+
+```css
+/* height holds the space before anything paints: this world's height over its width */
+.hero { position: relative; overflow: hidden; line-height: 0; height: 31.25vw; background: var(--page); }
+.hero canvas { position: absolute; top: 0; left: 0; image-rendering: pixelated; }
+```
+
+```js
+// canvas pixels: where the eye is, the least of the world a phone should see, and how much of the window's height it may take
+const FOCUS_X = 500, FOCUS_W = 400, MOST = .8, VIEW = {x0: 0, w: DW};
+cv.width = DW; cv.height = DH;
+function layout(){
+  const dpr = devicePixelRatio || 1, dev = Math.round(document.documentElement.clientWidth * dpr);
+  const D = Math.max(1, Math.ceil(dev / DW), Math.min(Math.floor(dev / FOCUS_W), Math.floor(MOST * innerHeight * dpr / DH)));   // whole device pixels per art pixel
+  const off = Math.round(clamp(FOCUS_X * D - dev / 2, 0, Math.max(0, DW * D - dev)));
+  cv.style.width = DW * D / dpr + 'px'; cv.style.height = DH * D / dpr + 'px'; cv.style.left = -off / dpr + 'px';
+  hero.style.height = DH * D / dpr + 'px';
+  VIEW.x0 = off / D; VIEW.w = Math.min(DW, dev / D);   // what's really showing, in canvas pixels
+}
+```
+
+- **Call it before you paint,** so the page holds its height, and again a moment after each resize. A phone's address bar fires resize as it slides away.
+- **The corners of the world aren't the corners of the view.** `drawFronds` and `p.vignette` go to the corners of the canvas, off-screen on a phone. Draw what frames the view from `VIEW`, with `frondSprite` at `VIEW.x0` and `VIEW.x0 + VIEW.w`.
+- **`look.mjs phone` and the referee's sheet show what's really in view.** Look at those, not at the whole canvas.
+- `assets/examples/rooftop` does it this way. `cabin.html` does it the other way round: the canvas is only as wide as the window, and every frame starts with `g.setTransform(1, 0, 0, 1, -VIEW.x0, 0)`. It's a little cheaper on a phone, but anything drawn straight on the canvas has to allow for it.
+
 ## Finishing touches
 
 - `p.vignette(.4 to .55)` on night scenes and rooms, as the last call in `bg`. It pulls the eye inward and hides the corners.
 - `drawFronds` in the bottom corners of outdoor scenes: the near-black framing that makes the rest feel deep.
-- A shadow under everything that stands on something: a flat dark ellipse, tinted, not black. It's what glues objects to the ground.
+- Something under everything that stands on something, to glue it to the ground: a small dark contact patch where it touches, tinted, not black, and then the shadow it really throws, running away from the light (`shadowsOf`, and see "Shadows" in `light.md`). A flat ellipse on its own looks pasted on.

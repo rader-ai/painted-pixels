@@ -23,11 +23,11 @@ Paths here are from this skill's own folder, wherever it's installed.
 
 **To know what you're aiming at,** read `references/style.md` and open its two sheets, `assets/gallery/style-do-dont.png` and `style-palettes.png`. `references/rules.md` is the rule book your work gets checked against at the end.
 
-**In any project:** copy `assets/kit.js` and `assets/starter.html` next to the page. `starter.html` is a complete small world, and it's your starting point. `kit.js` holds the whole toolkit, and `references/kit-index.md` lists all of it with line numbers, so you don't need to read it. Paint with `painter()`, and when the kit has no brush for something, write a new one on top of it. `assets/examples/cabin.html` is a whole scene made that way, with snow, mountains and a page of its own; its own code starts where `kit.js` ends. For a different shape, change `SW` and `SH` at the top of your copy of the kit. For anything on a real web page, read "On a web page" in `references/look.md`.
+**In any project:** copy `assets/kit.js` and `assets/starter.html` next to the page. `starter.html` is a complete small world, and it's your starting point. `kit.js` holds the whole toolkit, and `references/kit-index.md` lists all of it with line numbers, so you don't need to read it. Paint with `painter()`, and when the kit has no brush for something, write a new one on top of it. `assets/examples/cabin.html` is a whole scene made that way, with snow, mountains and a page of its own; its own code starts where `kit.js` ends. `assets/examples/rooftop` is another, with its Eye list filled in. For a different shape, change `SW` and `SH` at the top of your copy of the kit. For anything on a real web page, read "On a web page" in `references/look.md`.
 
-**Inside Lofi Studio** (`index.html`, with its `PLACES`): the toolkit's already in that file, under the same names the guides use. Paint in there.
+**Inside Lofi Studio** (`index.html`, with its `PLACES`): the toolkit's already in that file, under the same names the guides use. Paint in there. An older copy may only have some of it, so if you're about to rely on `LIGHTS`, `WIND`, `rare` or `lifeTick`, check they're there first. What's missing can come from `assets/kit.js`.
 
-**If you're only asked what's wrong with a scene:** run the referee on it (see "Finishing"), look at it yourself, go through the questions below, and describe what's off, biggest first. Then fix it, if asked.
+**If you're only asked what's wrong with a scene:** change nothing yet. Run the referee on it (`--place` for one world in an app), open its `sheet.png`, look at the scene yourself, and go through the questions under "For every element". Then describe what's off in plain words, biggest first, where biggest means whatever does most to cause what they asked about. The rank and any broken Laws come after that. Leave `eye.md` unticked, because a tick says a rule holds. Then fix it, if asked.
 
 **A guide may name something the kit doesn't have,** like `drawSurf`, `drawFolk` or `torchLight`. That's one world's own code from Lofi Studio, and you can read it as an example at https://github.com/rader-ai/lofi-studio/blob/main/index.html.
 
@@ -108,6 +108,8 @@ The short version. The rule book has all of it, and it's what your work gets che
 | Keep the beat out of the world, apart from small things | Anything bobbing to the beat looks cheap |
 | Make rare things rare, one at a time, from a shuffled bag | So that seeing one feels like luck |
 | Seed everything painted once; use `Math.random` only for live behaviour | Same place every visit |
+| Give built things a form, with `p.form`, and make them the real thing | "Everything is ugly squares": a box with a colour in it isn't anything yet |
+| Paint a room as its own layer with its window cut out, and draw the outside first | Or the rain falls through the TV, and the bus drives through the booth |
 | Keep the subject readable: plain contrast behind them, quiet next to busy | The scene's a small rectangle on a phone, and people glance at it |
 | Paint once what doesn't move; cache sprites; stay under 5 ms a frame | It has to keep up on a phone, with music playing |
 | Respect reduced motion and LED mode | Some people need the scene still or steady |
@@ -116,9 +118,9 @@ The short version. The rule book has all of it, and it's what your work gets che
 
 It isn't finished until the referee's seen it.
 
-1. **Run the referee:** `node scripts/validate.mjs --page your-page.html --out quest`, after `npm install` once in `scripts/`. It takes a couple of minutes, and it writes a status screen, an inspection sheet and a list of what to look at. Inside Lofi Studio, add `--place forest`.
+1. **Run the referee:** `node path/to/this/skill/scripts/validate.mjs --page your-page.html`, after `npm install` once in `scripts/`. A full check takes about three and a half minutes, and `--quick` takes a few seconds while you're painting. It writes a status screen, an inspection sheet and a list of what to look at into a `quest` folder next to the page. Inside Lofi Studio, add `--place forest`.
 2. **Fix every Law.** Fix every Custom too, unless you're breaking it on purpose, in which case say so on the page and it's excused (see `references/validation.md`).
-3. **Walk the Eye list.** The machine can't judge these. Open `quest/sheet.png` with the Read tool, film what needs filming, and tick each rule off in `quest/eye.md` with a note saying what you saw. Only tick what you've really looked at. Run the referee again.
+3. **Walk the Eye list.** The machine can't judge these. Open `quest/sheet.png` with the Read tool, film what needs filming, and tick each rule off in `quest/eye.md` with a note saying what you saw. Only tick what you've really looked at. If a rule can't apply here, tick it and say why, as in "nobody walks in this scene". Run the referee again.
 4. **Report back:** the rank, what you made, the calls you made, any Custom you broke and why, how you checked it, and what you couldn't check. You can't watch motion here: you judged it from frame strips, so say so, and say what's most likely to need tuning. If the person can see files, show them `quest/status.png`.
 
 Rank S means the machine has no complaints and every Eye rule has been walked. It doesn't mean it's beautiful. Only somebody looking at it can tell you that.

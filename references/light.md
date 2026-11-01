@@ -65,6 +65,20 @@ A place usually has a key that's high and cool and a local light that's low and 
 - It's the colour of the sky, not black (`ink`).
 - A second light gives a second shadow, and `shadowsOf` gives you both. A fire's flickers with the flames, and it strengthens as you get closer, so it doesn't snap on at the edge of the light's reach. Close to the fire, it washes the moon's shadow out.
 - When a cloud covers the light, the shadow fades.
+- Something painted once throws one too. Ask `shadowsOf(L, x, y)` while painting, and sweep its footprint along each shadow:
+
+```js
+// x0..x1: its footprint, yb: the ground under it, h: how tall it is. Hand it a copy of the light with
+// veiled: 0 and no flicker, since this is painted once.
+for (const sd of shadowsOf(L, (x0 + x1) / 2, yb)){
+  const n = Math.hypot(sd.dx, sd.dy) || 1, len = Math.min(26, n * h), vx = sd.dx / n * len, vy = Math.max(.5, sd.dy / n * len), ink = rgb(sd.ink);
+  const steps = Math.max(2, Math.ceil(Math.hypot(vx, vy) * HD));
+  for (let i = 0; i <= steps; i++){
+    const f = i / steps, a = sd.alpha * 2.6 * (1 - f * .75), Y = R2(yb + vy * f), X0 = R2(x0 + vx * f), X1 = Math.max(R2(x1 + vx * f), X0 + 1);
+    for (let X = X0; X < X1; X++) if (bay(X, Y) + .5 < a) p.put(X, Y, [ink[0], ink[1], ink[2], .5]);
+  }
+}
+```
 
 **Something that blocks the light takes it from what's behind.** A log throws a shadow away from the fire. A cloud over the sun dims everything it was falling on, moving things included, and the shadows soften until it passes. `skyDim` does this by painting over whatever's been drawn so far, so call it after everything the sun or moon lights, and before anything with its own light, like a fire or a torch.
 
@@ -162,7 +176,7 @@ Do this on the screen, one thing at a time. A wrongly lit tree looks fine at a g
 - [ ] **Follow a line from the light to each thing.** Is its bright side on that side? Do this for clouds, mountains, trees, buildings, people and animals.
 - [ ] **Follow the line through each thing to the ground.** Is its shadow on the far side, and fanning the right way?
 - [ ] **Move it.** Film a strip of something crossing the frame, or crossing a light. Does its lit edge change? Does it warm and cool? Does its shadow swing?
-- [ ] **Cover the source.** Find a moment when a cloud crosses it, with `look.mjs probe --expr "LIGHTS.hill.veiled" --n 100 --gap 2`, then make a strip with `--at` set to that time. Does the land dim, do moving things dim with it, and do the shadows fade? If no cloud ever crosses, narrow the clouds' band around the source (`y0` and `y1`) or add one.
+- [ ] **Cover the source.** Find a moment when a cloud crosses it, with `look.mjs probe --expr "LIGHTS.hill.veiled" --n 100 --gap 2`, then make a strip with `--at` set to that time. Does the land dim, do moving things dim with it, and do the shadows fade? If no cloud ever crosses, see "Getting a cloud across the moon" in `sky.md`.
 - [ ] **What in this frame is smooth or wet?** Does it show what's opposite it?
 - [ ] **What's in the air?** Smoke, rain, dust, mist. Does it catch the light it passes through?
 - [ ] **Is anything black?** Shadows should have the colour of the sky.

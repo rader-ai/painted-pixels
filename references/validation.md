@@ -7,18 +7,19 @@
 Run `npm install` once in `scripts/`. It needs Chrome.
 
 ```bash
-node scripts/validate.mjs --page your-page.html --out quest
-node scripts/validate.mjs --page lofi-studio/index.html --place forest
-node scripts/validate.mjs --page lofi-studio/index.html --place all --out quest
+node path/to/this/skill/scripts/validate.mjs --page your-page.html
+node path/to/this/skill/scripts/validate.mjs --page lofi-studio/index.html --place forest
+node path/to/this/skill/scripts/validate.mjs --page lofi-studio/index.html --place all
 ```
 
-A full check takes a couple of minutes for one scene. It plays every rare sight and action to its end, then runs on for a while, watching for what only goes wrong after minutes.
+It writes into a `quest` folder next to the page, and paths you give it are from the folder you're in. A full check takes about three and a half minutes for one scene. It plays every rare sight and action to its end, then runs on for a while, watching for what only goes wrong after minutes. At the end it lists what it couldn't check, and why. A rule it couldn't check isn't a rule that passed.
 
 | Flag | What it does |
 |---|---|
-| `--quick` | Skips the long run, reduced motion, the phone and the cost. For while you're painting. A quick A doesn't count as an A |
+| `--quick` | Skips the long run, reduced motion, the phone and the cost, and takes a few seconds. For while you're painting. A quick A doesn't count as an A |
+| `--out folder` | Writes somewhere other than `quest` |
 | `--seconds 24` | How long it watches the scene |
-| `--minutes 3` | How long the long run is. Some bugs take a while to show: our starved clouds first popped about two and a half minutes in |
+| `--minutes 3` | How long the long run is. Some bugs take a while to show: our starved clouds could take two and a half minutes |
 | `--seed 2026` | A different seed gives a different run. Try one if a result looks like luck |
 | `--root folder` | The folder to serve, if the page loads files from above its own folder |
 | `--who guy` or `girl` | Which character, in Lofi Studio |
@@ -31,10 +32,10 @@ It exits with 1 if a Law is broken, so it can sit in a script. `report.json` is 
 | File | What it's for |
 |---|---|
 | `status.png` | The result, as a status screen. Show this to the person if they can see files |
-| `sheet.png` | What to look at for the Eye rules: the frame, what moved, its suspects, phone size, up close, and its colours. Open it with the Read tool |
+| `sheet.png` | What to look at for the Eye rules: the frame, what moved, its suspects, what a phone really shows, up close, and its colours. Open it with the Read tool |
 | `eye.md` | The Eye rules, to tick off |
 | `frame.png` | The frame that was judged |
-| `report.json` | Every number, and the rule each one belongs to |
+| `report.json` | Every number, and the rule each one belongs to. `run.parts` says how much of each part of the frame moved, four across and three down, which is the quickest way to answer "why does it feel static?" |
 | `jump-1.png` | Only if something popped in the long run: the frame before and the frame after, one above the other |
 
 ## What the ranks mean
@@ -77,7 +78,7 @@ The machine can't tell whether the bright side of a tree faces the moon. Those r
 
 1. Open `sheet.png` with the Read tool. It's arranged so that the frame, what moved, the suspects and phone size are all in one picture.
 2. Take the rules in order. Each one says what to look at, and some need a strip of frames from `look.mjs`.
-3. Tick a rule only once you've really looked, and write what you saw: `- [x] L2 ... note: the moon's upper left, and every pine is lit on that side`. A note under 12 characters doesn't count.
+3. Tick a rule only once you've really looked, and write what you saw: `- [x] L2 ... note: the moon's upper left, and every pine is lit on that side`. A note under 12 characters doesn't count. If a rule can't apply here, tick it and say why: `note: nobody walks in this scene`. You've still looked.
 4. A problem stays unticked until it's fixed. If you change the art, untick what that touches.
 5. Run the referee again, with the same `--out`. It reads your ticks from there, and they stay.
 
@@ -107,20 +108,21 @@ Each row is a quick look at every world in that version, so there's no long run,
 
 | Version | What changed | Ranks, and failures per world | What failed |
 |---|---|---|---|
-| `45030b1` | The first castle, on its own | D, 5 failures | C4 C5 D1 L1 M3 |
-| `f152449` | Every album gets a scene | 8 D, 5 to 7 | C4×8 C5×8 D1×4 G3 L1×8 M1 M3 M4×7 M5 P2×8 |
-| `85e7961` | Repainted in hi-bit | 8 D, 3 to 7 | C4×4 C5×2 D1×3 L1×8 M1 M3 M4×7 M5 P2×8 |
-| `02222d4` | Softer clouds, deeper parallax | 8 D, 3 to 5 | C4×3 C5 D1×2 L1×8 M1 M4×6 M5×2 P2×8 |
-| `93e0785` | Real trees, calmer castle lights | 8 D, 2 to 5 | C4×3 C5 D1×2 L1×8 M1 M4×6 M5 P2×8 |
-| `df0ba6b` | Deep foliage, and wind | 8 D, 3 to 6 | C4×2 C5 D1 L1×8 M2×8 M4×6 M5 P2×8 |
-| `87455fb` | No more bouncing, small human moments | 8 D, 2 to 5 | C4×2 C5 D1 L1×8 M2×8 M5 |
-| `6a61202` | Gusts, wildlife, things to do | 8 D, 1 to 3 | C5 D1 G3 L1×8 M5 |
-| `c9ee540` | Clouds that change | 8 D, 1 to 2 | G3 L1×8 M3 M5 |
-| `51503c3` | The light written down first | 5 A, 2 B, 1 D | G3 M3 M5 |
-| `b61438b` | Every cloud gets its turn, and clouds dim what moves | 6 A, 2 B | M3 M5 |
-| `47684ff` | What the referee found, fixed | 8 A | None |
+| `45030b1` | The first castle, on its own | D, 7 failures | C4 C5 D1 D7 L1 M3 M7 |
+| `f152449` | Every album gets a scene | 8 D, 6 to 9 | C4×8 C5×8 D1×4 D7×6 G3 L1×8 M1 M3 M4×7 M5 M7×8 P2×8 |
+| `85e7961` | Repainted in hi-bit | 8 D, 4 to 8 | C4×4 C5×2 D1×3 D7×4 L1×8 M1 M3 M4×7 M5 M7×8 P2×8 |
+| `02222d4` | Softer clouds, deeper parallax | 8 D, 4 to 7 | C4×3 C5 D1×2 D7×4 L1×8 M1 M4×6 M5×2 M7×8 P2×8 |
+| `93e0785` | Real trees, calmer castle lights | 8 D, 3 to 7 | C4×3 C5 D1×2 D7×3 L1×8 M1 M4×6 M5 M7×8 P2×8 |
+| `df0ba6b` | Deep foliage, and wind | 8 D, 4 to 8 | C4×2 C5 D1 D7×3 L1×8 M2×8 M4×6 M5 M7×8 P2×8 |
+| `87455fb` | No more bouncing, small human moments | 8 D, 3 to 7 | C4×2 C5 D1 D7×3 L1×8 M2×8 M5 M7×8 |
+| `6a61202` | Gusts, wildlife, things to do | 8 D, 1 to 3 | C5 D7 L1×8 M5 |
+| `c9ee540` | Clouds that change | 8 D, 1 to 3 | D7 G3 L1×8 M3 M5 |
+| `51503c3` | The light written down first | 6 A, 2 B | D7 M3 M5 |
+| `b61438b` | Every cloud gets its turn, and clouds dim what moves | 6 A, 2 B | D7 M3 M5 |
+| `1cafdd4` | What the referee and a test agent found, fixed | 7 A, 1 B | D7 |
+| `12e0c36` | The coffee shop and the office painted again | 8 A | None |
 
-A full check of `47684ff`, on two different seeds, gives Rank A in seven worlds and Rank B in the park, on cost. Everything before `51503c3` is Rank D for at least one reason, L1, since the light wasn't written down yet. That's why it's worth reading the failure counts as well as the rank.
+A full check of `12e0c36`, on two different seeds, gives Rank A in all eight worlds. None of them has Rank S, because their Eye lists haven't been walked and ticked one by one. Everything before `51503c3` is Rank D for at least one reason, L1, since the light wasn't written down yet. That's why it's worth reading the failure counts as well as the rank.
 
 **What people said, and what the referee says about that version:**
 
@@ -134,11 +136,15 @@ A full check of `47684ff`, on two different seeds, gives Rank A in seven worlds 
 | "waves dont feel like they have any froth or foam" | `87455fb` | Partly. D1: the sea ends in a straight line across the whole frame. Froth takes an eye |
 | "we arent doing this right", of foliage, layers and shading | `93e0785` | Barely. C4 in three of the worlds, at 167 to 276 colours. The rest takes an eye |
 | "the trees just look like balls/spheres connected" | `02222d4` | No |
+| "the rain in the office is appearing inside and in front of the TV" | `1cafdd4` | No. It takes someone looking, and D4 is an Eye rule that nobody had walked |
+| "Everything is ugly squares", of the coffee shop | `1cafdd4` | Not then. D7 comes from that sentence, and it's the one limit here that was set after the complaint: 10.3% of that frame was plain boxes, and 2.2% once it was repainted. Pointed at the history afterward, it also fails the first office, garden, park and beach, at up to 12.4% |
 | "too many spheres attached together", of the clouds | `85e7961` | No |
 
 So the machine catches about what you'd expect: what can be counted. The Eye rules are there for the rest.
 
-**And what nobody had said.** The referee also found things in the old versions that people had lived with: wind that was never calm, in all eight worlds at `df0ba6b` and `87455fb` (M2). A moon's halo and the torches leaping on every beat, 134 times in 24 seconds, on the first castle (M3). Clouds appearing from nothing in the garden, about a minute into a long run, at `51503c3` (M3).
+**What Rank A was worth.** When the referee was first finished, all eight worlds had Rank A. Then someone looked at two of them on a phone, and within a minute saw rain falling through a TV, a bus driving through a booth, and a whole scene of boxes with colours in them. Every machine rule had passed, and the rule that would have caught the rain, D4, was sitting in `eye.md`, unticked. That's exactly what Rank A says: the machine has no complaints, and nobody's looked. Giving a fresh agent just the pictures of all eight worlds, and asking what's wrong, found dozens more, from a person smaller than their mug to a moon's reflection like a ladder. So do the walk, and get the second opinion.
+
+**And what nobody had said.** The referee also found things in the old versions that people had lived with: wind that was never calm, in all eight worlds at `df0ba6b` and `87455fb` (M2). A moon's halo and the torches leaping on every beat, 134 times in 24 seconds, on the early castle (M3). Clouds appearing from nothing in the garden, about a minute into a long run, at `51503c3` (M3).
 
 ## The referee checked too
 
@@ -151,6 +157,7 @@ So the machine catches about what you'd expect: what can be counted. The Eye rul
 - **A coffee shop whose lamps pulsed with the beat** (M5), across 7.5% of the frame. Chasing a smaller reading at the castle turned up the glow round its moon doing the same.
 - **A shadow that snapped** (M3), on the beach, from standing up to lying down, as someone walked past the point under the sun.
 - **A black cat that could stay on the castle wall for minutes** (M9). It walks at about the speed the world scrolls, so walking our way, it nearly stands still. It only turned up on the third run, because that's when the dice sent it that way. It's why a clean run isn't proof, and why `--seed` exists.
-- **A park that's a little over budget** (K1), at 5.3 to 5.5 ms a frame. That one's still there, so the park is Rank B.
 
-**And what it found in itself.** The self-test caught a leak check that missed slow leaks. Pointing it at the old versions showed that its pop check couldn't see the starved clouds that first prompted it: it watched for too short a time, allowed one pop, and let grass in the wind hide a whole cloud appearing in the sky. Now it watches the whole long run, part by part of the frame, and it caught them. Check the checker.
+**And what it found in itself.** The self-test caught a leak check that missed slow leaks. Pointing it at the old versions showed that its pop check couldn't see the starved clouds that first prompted it: it watched for too short a time, allowed one pop, and let grass in the wind hide a whole cloud appearing in the sky. Now it watches the whole long run, part by part of the frame, and it caught them.
+
+Then a fresh agent painted a rooftop with this skill, and reported two more. Well-built pages cap their frame rate, and that made them skip the frames the beat test asked for, so a person bouncing to the beat passed without ever being measured. There's a page for that in the self-test now. And reading a page's canvas back, frame after frame, made the cost number jump tenfold partway through, so it reads a one-pixel copy instead. Even before the jump, that way of reading made every world look about a millisecond dearer than it is. The park had been failing K1 at 5.5 ms, and it comes to about 4.5 now, so it went from Rank B to Rank A without getting any cheaper. The agent's own explanation, a 3 ms floor under every page, turned out to be wrong: an empty page comes to .3 ms. Check the checker, and check what the checker's users tell you.

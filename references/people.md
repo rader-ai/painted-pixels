@@ -105,7 +105,7 @@ sigh: [[.9, {chest: -2, hy: -1, tilt: -3, eyes: 'shut'}], [1.3, {}], [2.2, {ches
 
 **To add an action in another project,** use the kit's `addAction(name, list)`, since `ACTIONS` were filled in as the kit loaded. In Lofi Studio, add it to the `ACTIONS` table.
 
-**A prop** is drawn from where the hand is: `PROPS.name(k, p, a, X, Y)`. Set it with `prop: 'name'` at the moment the hand arrives at it, and take it away the same way. For something they hold all the time, set `k.holding = 'mug'` and move the resting hand with `sitHero`'s `rest`. If it comes from somewhere, show it coming from there: everything for the campfire comes out of the bag next to the log, and the mug goes back on the table.
+**A prop** is drawn from where the hand is: `PROPS.name(k, p, a, X, Y)`. It takes the light the person is in without any help, because `k.g` tones its colours on the way through. A screen or a flame has a light of its own, so it paints on `k.bare` instead. Set it with `prop: 'name'` at the moment the hand arrives at it, and take it away the same way. For something they hold all the time, set `k.holding = 'mug'` and move the resting hand with `sitHero`'s `rest`. If it comes from somewhere, show it coming from there: everything for the campfire comes out of the bag next to the log, and the mug goes back on the table.
 
 **A prop can have a whole story in its channels.** `smoreFire` uses `toast` (the marshmallow browning) and `blaze` (it catches): the toast goes up, the fire starts, they wave it, blow it out, shrug, and eat it anyway, with a small cough. `../assets/gallery/marshmallow.png`.
 

@@ -6,13 +6,18 @@
   "scripts/fixtures/dead.html": {"fails": ["C1", "C2"]},
   "scripts/fixtures/samehue.html": {"fails": ["C3"], "passes": ["C1"]},
   "scripts/fixtures/flat.html": {"fails": ["C4", "C5", "D1", "M1"]},
+  "scripts/fixtures/boxes.html": {"fails": ["D7"]},
   "scripts/fixtures/busy.html": {"fails": ["M2"]},
   "scripts/fixtures/pop.html": {"fails": ["M3"]},
   "scripts/fixtures/beat.html": {"fails": ["M4", "M5", "M6"]},
+  "scripts/fixtures/capped.html": {"fails": ["M4", "M5"]},
   "scripts/fixtures/nolife.html": {"fails": ["L1", "M7", "P1", "P2"]},
   "scripts/fixtures/stuck.html": {"quick": false, "fails": ["M7", "M8", "M9", "K2"]},
   "scripts/fixtures/slow.html": {"quick": false, "fails": ["K1"]},
   "scripts/fixtures/throws.html": {"fails": ["K3"]},
+  "scripts/fixtures/tile.html": {"tiles": true},
+  "scripts/fixtures/pool.html": {"tiles": false},
   "assets/starter.html": {"quick": false, "noLaws": true},
-  "assets/examples/cabin.html": {"quick": false, "noLaws": true}
+  "assets/examples/cabin.html": {"quick": false, "noLaws": true},
+  "assets/examples/rooftop/index.html": {"quick": false, "noLaws": true}
 }

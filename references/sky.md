@@ -71,6 +71,12 @@ cloudDeck(k, t, dt, 'forestClouds', {mix: [.2, .3, .4, .1], n: 5, y0: 2, y1: 34,
 - For a sun below the clouds, pass `light`: `{under: 1, sunX: 160}` at sunset.
 - Use `C_DAY`, `C_SUNSET` or `C_MOONLIT`. Palette and light go together.
 
+**Getting a cloud across the moon.** It's easy to paint a sky where no cloud ever crosses it, and then nothing dims.
+
+- `y0` and `y1` are where the top of each cloud's canvas goes, not its body, which sits well below that (at `c.base`). For a moon at y 24, `y0: 6, y1: 36` hardly ever covered it in one test, while `y0: 4, y1: 20` covered it 69% of the time. Set them above the source.
+- The clouds come from `seed`, and the same seed gives the same sky on every visit. The referee's `--seed` doesn't touch them. If a sky doesn't work, try a few seeds, and check each with `look.mjs probe --expr "LIGHTS.yours.veiled" --n 60 --gap 3`.
+- Cover is sampled at nine points on the source, so it moves in steps of about .11.
+
 **Each cloud is on its own little canvas** (`c.cv`), so a lake can draw it flipped for its reflection, and `cloudShadows` can throw a shadow from the thick ones.
 
 **Cost:** one repaint is about half a millisecond on a laptop, and only one cloud repaints in any frame: whichever has waited longest. Taking them in list order starved the last ones on a slow phone, and they popped in from nothing when their turn finally came. Empty pixels skip the noise, and everything's read from precomputed tables.

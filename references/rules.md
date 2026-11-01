@@ -57,9 +57,10 @@ The numbers aren't arbitrary. They were set by running the checks over Lofi Stud
 | D1 | Custom | **No ruled edge across the frame.** No straight seam over 90% of the width. | A ruler isn't in nature. Let things stand across it, or wobble it. | Machine |
 | D2 | Custom | **It reads at phone size.** You can name the main things, and you'd know this place from a thumbnail. | The scene's a small rectangle on a phone, and people glance at it. Detail can't fix this later. | Eye: phone size on the sheet |
 | D3 | Custom | **Far is pale and flat, near is rich or nearly black.** | The eye reads this falling-off as depth, even in a still frame. | Eye: the frame |
-| D4 | Custom | **Everything's really in front of what it's in front of.** | A walker over a torch, a star in front of a mountain, a bird's feet behind a bench. | Eye: the frame, then a strip |
+| D4 | Custom | **Everything's really in front of what it's in front of.** What's outside a window is behind everything in the room, and what walks along a tree line is behind the tent. | Rain in front of the TV, a bus in front of the booth, a walker over a torch, a bird's feet behind a bench. | Eye: film each moving thing across the frame, and follow what it passes |
 | D5 | Custom | **Speed follows distance.** The near passes fastest, and the sun doesn't move. | Chosen by eye, layers feel tied together or slide. | Eye: a strip, if anything walks or scrolls |
 | D6 | Custom | **No combs, no tiles, no edges that just stop.** | If you can spot a period, it isn't finished. | Eye: the suspects on the sheet, and where things end |
+| D7 | Custom | **Nothing's a plain box.** At most 3% of the frame is flat rectangles, not counting sky and floor. | "Everything is ugly squares." A bus, a chair, a screen: if it's a box with a colour in it, it isn't anything yet. | Machine |
 
 ## M. Motion
 

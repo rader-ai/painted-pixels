@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>fixture</title><style>html,body{margin:0;background:#111}canvas{display:block;image-rendering:pixelated}</style><canvas id="c" width="640" height="300"></canvas>
+<script>const c=document.getElementById("c"),g=c.getContext("2d");g.imageSmoothingEnabled=false;
+// a coffee shop, as it first came out: a wall with some texture, and everything on it a box with a colour in it
+const bay=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5],R=[[40,24,18],[58,34,24],[78,46,32],[96,60,42],[116,74,52]];
+for(let y=0;y<300;y++)for(let x=0;x<640;x++){const v=.4+Math.sin(x*.07+y*.03)*.12+Math.sin(y*.21)*.06+(bay[(y&3)*4+(x&3)]/16-.5)*.35,i=Math.max(0,Math.min(4,Math.floor(v*5)));g.fillStyle="rgb("+R[i].join(",")+")";g.fillRect(x,y,1,1)}
+for(const[x,y,w,h,col]of[[40,150,110,40,"#d8a030"],[206,166,24,70,"#8a2f3a"],[206,222,56,14,"#a83c44"],[320,60,120,70,"#16201c"],[526,146,60,48,"#a0a0b0"],[60,205,30,40,"#4a2c1c"],[100,205,30,40,"#4a2c1c"],[140,205,30,40,"#4a2c1c"]]){g.fillStyle=col;g.fillRect(x,y,w,h)}
+function frame(){requestAnimationFrame(frame)}requestAnimationFrame(frame);</script>

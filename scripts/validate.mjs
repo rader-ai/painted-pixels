@@ -10,7 +10,7 @@
 // --quick skips the long soak and the reduced-motion run. --root is the folder to serve, if the page loads
 // files from above its own folder. To break a Custom on purpose, say so on the page, and it's excused:
 //   <script>window.PAINTED_PIXELS_EXCUSES = {C5: "the ground melts into the page"};</script>
-// It writes these into --out (default: quest, then a folder per place when there's more than one):
+// It writes these into --out (default: a folder called quest next to the page, with one inside it per place when there's more than one):
 //   status.png   the result, as a status screen
 //   sheet.png    what to look at for the Eye rules: the frame, what moves, its colours, phone size, up close
 //   frame.png    the frame that was judged
@@ -50,7 +50,7 @@ export function readRules(file = join(SKILL, 'references/rules.md')){
 
 // ---- what happens inside the page. Counts the canvas calls that blur, from before its first line.
 const instrument = () => {
-  const C = CanvasRenderingContext2D.prototype, q = window.__q = {on: false, calls: {}, where: {}, rects: 0, draws: 0}, real = {};
+  const C = CanvasRenderingContext2D.prototype, q = window.__q = {on: false, calls: {}, where: {}, rects: 0, draws: 0, touched: 0}, real = {};
   const note = kind => {
     if (!q.on) return;
     q.calls[kind] = (q.calls[kind] || 0) + 1;
@@ -66,9 +66,10 @@ const instrument = () => {
   }
   const frac = v => Math.abs(v - Math.round(v)) > 1e-3;
   real.fillRect = C.fillRect;
-  C.fillRect = function(x, y, w, h){ if (q.on){ q.rects++; if (frac(x) || frac(y) || frac(w) || frac(h)) note('offGrid'); } return real.fillRect.call(this, x, y, w, h); };
+  C.fillRect = function(x, y, w, h){ q.touched++; if (q.on){ q.rects++; if (frac(x) || frac(y) || frac(w) || frac(h)) note('offGrid'); } return real.fillRect.call(this, x, y, w, h); };
   real.drawImage = C.drawImage;
   C.drawImage = function(...a){
+    q.touched++;
     if (q.on){
       q.draws++;
       const [dx, dy, dw, dh] = a.length === 3 ? [a[1], a[2]] : a.length === 5 ? [a[1], a[2], a[3], a[4]] : [a[5], a[6], a[7], a[8]];
@@ -124,11 +125,11 @@ const setUp = async ({place, who, seed}) => {
   let beats = 0, beatStep = false;
   const thrown = [];
   const canBeat = has('scene') && 'beat' in scene;
-  const tick = dt => {
+  const tick = (dt, quiet) => {
     clock.now += dt * 1000;
     if (isApp) hum(clock.now / 1000);
     beatStep = false;
-    if (canBeat && dt > 0){
+    if (canBeat && dt > 0 && !quiet){
       const before = beats, bpm = has('state') && state.bpm || 72;
       beats += dt * bpm / 60 * 2;
       if (Math.floor(beats) !== Math.floor(before)){
@@ -146,6 +147,13 @@ const setUp = async ({place, who, seed}) => {
     isApp, has, tick, canvas, clock, thrown,
     beating: () => beatStep, canBeat,
     warm(s){ for (let x = 0; x < s; x += .05) tick(.05); },
+    // One more frame with the clock stopped, to see what changes when nothing else can. A page that caps its frame rate
+    // won't draw unless time has passed, so there it takes the next step instead, and whatever moved anyway gets taken away.
+    redraw(){
+      const before = __q.touched;
+      tick(0);
+      if (__q.touched === before) tick(.05, true);
+    },
     // A pop is a solid area changing colour by a lot in one step, far more than that part of the frame was doing just
     // before and just after. A glow stepping a level changes many pixels by a little. A far layer sliding one pixel changes
     // thin edges. Neither counts: solid means the pixels around it changed too. It's judged part by part of the frame, or
@@ -207,7 +215,9 @@ const watch = ({seconds, place}) => {
   v.warm(6);
   const scale = v.has('HD') ? HD : W / 320, box = () => {
     if (!v.has('scene') || !(scene.heroX > 0)) return null;
-    return [Math.round(scene.heroX * scale) - 6, Math.round(scene.heroY * scale) - 6, 38, 56];
+    // a page that crops by moving the canvas's origin has them somewhere else on the canvas than in the world
+    const o = c.getContext('2d').getTransform();
+    return [Math.round(scene.heroX * scale + o.e) - 6, Math.round(scene.heroY * scale + o.f) - 6, 38, 56];
   };
   const pass = (secs, keep) => {
     const steps = Math.round(secs / .05), changes = [], jumps = [], counts = new Uint16Array(n), winds = [];
@@ -228,9 +238,10 @@ const watch = ({seconds, place}) => {
     const med = a => a.length ? a.slice().sort((x, y) => x - y)[a.length >> 1] : 0;
     const pops = v.popsIn(jumps);
     let moved = 0, busy = 0;
-    for (let p = 0; p < n; p++){ if (counts[p]) moved++; if (counts[p] > steps * .3) busy++; }
+    const parts = new Array(12).fill(0);
+    for (let p = 0; p < n; p++){ if (counts[p]){ moved++; parts[Math.floor(Math.floor(p / W) * 3 / H) * 4 + Math.floor((p % W) * 4 / W)]++; } if (counts[p] > steps * .3) busy++; }
     if (keep){ v.lastCounts = counts; v.lastSteps = steps; }
-    return {median: med(changes), most: Math.max(...changes), moved: moved / n, busy: busy / n, pops, calm: winds.length ? winds.filter(x => x < .25).length / winds.length : null, acted, lived: v.has('life') ? life.clock - clock0 : 0};
+    return {median: med(changes), most: Math.max(...changes), moved: moved / n, parts: parts.map(x => +(x * 12 / n).toFixed(3)), busy: busy / n, pops, calm: winds.length ? winds.filter(x => x < .25).length / winds.length : null, acted, lived: v.has('life') ? life.clock - clock0 : 0};
   };
   Object.assign(got, {run: pass(seconds, true)});
   q.on = false;
@@ -238,7 +249,7 @@ const watch = ({seconds, place}) => {
   // a layer sliding past. Then again with the lights told not to flash: what's left around the person is them bouncing.
   if (v.canBeat){
     const react = () => {
-      const shot = beat => { scene.beat = beat; if ('q' in scene) scene.q = beat; v.tick(0); return v.read().slice(); };
+      const shot = beat => { scene.beat = beat; if ('q' in scene) scene.q = beat; v.redraw(); return v.read().slice(); };
       const hero = box(), area = hero && [hero[0], hero[1], hero[0] + hero[2], hero[1] + hero[3]];
       const differ = (x, y, area) => {
         let count = 0;
@@ -251,9 +262,10 @@ const watch = ({seconds, place}) => {
       // A few times over, keeping the smallest: a real reaction shows every time, and a bee that happened to flutter past doesn't.
       let frame = Infinity, heroMoved = Infinity, at = null;
       for (let i = 0; i < 3; i++){
-        const a = shot(0), noise = shot(0), b = shot(1), count = Math.max(0, differ(a, b) - differ(a, noise));
+        // what the beat changed, less what changes anyway from one frame to the next
+        const n0 = shot(0), a = shot(0), b = shot(1), count = Math.max(0, differ(a, b) - differ(n0, a));
         shot(0);
-        heroMoved = Math.min(heroMoved, area ? Math.max(0, differ(a, b, area) - differ(a, noise, area)) : 0);
+        heroMoved = Math.min(heroMoved, area ? Math.max(0, differ(a, b, area) - differ(n0, a, area)) : 0);
         if (count >= frame) continue;
         frame = count;
         // and where, so that it can be found
@@ -290,16 +302,17 @@ const watch = ({seconds, place}) => {
   // does the person stand out from what's behind them? The same instant, drawn with and without them
   try {
     if (got.hero && typeof heroDraw === 'function'){
+      v.redraw();
       const a = v.read().slice();
       // a page may draw them with heroDraw or straight from the rig
       const realDraw = heroDraw, realRig = typeof rigDraw === 'function' ? rigDraw : null;
       heroDraw = () => {};
       if (realRig) rigDraw = () => {};
-      v.tick(0);
+      v.redraw();
       const b = v.read().slice();
       heroDraw = realDraw;
       if (realRig) rigDraw = realRig;
-      v.tick(0);
+      v.redraw();
       const [x0, y0, w, h] = got.hero;
       let sum = 0, cnt = 0, lums = [];
       for (let y = Math.max(0, y0 - 12); y < Math.min(H, y0 + h + 12); y++) for (let x = Math.max(0, x0 - 12); x < Math.min(W, x0 + w + 12); x++){
@@ -383,27 +396,57 @@ const still = () => {
     if (best >= W * .3) seams.push({y, x: end - best, w: best});
   }
   seams.sort((a, b) => b.w - a.w);
-  // a comb or a tile: a band of the picture that repeats. Smoothed first, or the dither's own 8-pixel lattice wins
+  // A comb or a tile: a band of the picture that comes back at some distance. Smoothed first, or the dither's own 8-pixel
+  // lattice wins. The slow changes are taken away, and it has to fall away before it comes back: a pool of lamplight across
+  // a floor looks like itself at any small distance, and that isn't a repeat.
   const tiles = [];
   for (let y = 0; y + 16 <= H; y += 16){
     const raw = new Float32Array(W), prof = new Float32Array(W);
     for (let x = 0; x < W; x++){ let s = 0; for (let k = 0; k < 16; k++) s += lum[(y + k) * W + x]; raw[x] = s / 16; }
     for (let x = 0; x < W; x++){ let s = 0, m = 0; for (let k = -4; k < 4; k++){ const u = x + k; if (u >= 0 && u < W){ s += raw[u]; m++; } } prof[x] = s / m; }
-    let mean = 0, vari = 0;
-    for (const a of prof) mean += a;
-    mean /= W;
-    for (let x = 0; x < W; x++){ prof[x] -= mean; vari += prof[x] * prof[x]; }
+    const sum = new Float32Array(W + 1);
+    for (let x = 0; x < W; x++) sum[x + 1] = sum[x] + prof[x];
+    let vari = 0;
+    for (let x = 0; x < W; x++){ const a = Math.max(0, x - 64), b = Math.min(W, x + 65), u = prof[x] - (sum[b] - sum[a]) / (b - a); raw[x] = u; vari += u * u; }
     if (vari / W < 12) continue;
-    let best = 0, lagAt = 0;
-    for (let lag = 16; lag <= W / 4; lag++){
+    let best = 0, lagAt = 0, fell = false;
+    for (let lag = 2; lag <= W / 4; lag++){
       let s = 0;
-      for (let x = 0; x < W - lag; x++) s += prof[x] * prof[x + lag];
+      for (let x = 0; x < W - lag; x++) s += raw[x] * raw[x + lag];
       const cor = s / vari * W / (W - lag);
-      if (cor > best){ best = cor; lagAt = lag; }
+      if (cor < .3) fell = true;
+      if (fell && lag >= 16 && cor > best){ best = cor; lagAt = lag; }
     }
     if (best > .8) tiles.push({y, lag: lagAt, score: +best.toFixed(2)});
   }
   tiles.sort((a, b) => b.score - a.score);
+  // Plain boxes: areas of one flat colour, nearly as full as their bounding rectangles, once dither's been smoothed away. The
+  // sky and the floor don't count: anything about as wide as the frame is a background, and a thing is what's standing on it.
+  const S = new Float32Array(n * 3), boxes = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    let r0 = 0, g0 = 0, b0 = 0, m = 0;
+    for (let a = -1; a <= 1; a++) for (let e = -1; e <= 1; e++){ const u = x + e, w = y + a; if (u < 0 || w < 0 || u >= W || w >= H) continue; const j = (w * W + u) * 4; r0 += d[j]; g0 += d[j + 1]; b0 += d[j + 2]; m++; }
+    const i = (y * W + x) * 3; S[i] = r0 / m; S[i + 1] = g0 / m; S[i + 2] = b0 / m;
+  }
+  seen.fill(0);
+  for (let s = 0; s < n; s++){
+    if (seen[s]) continue;
+    const r0 = S[s * 3], g0 = S[s * 3 + 1], b0 = S[s * 3 + 2];
+    let sp = 0, area = 0, x0 = W, y0 = H, x1 = 0, y1 = 0;
+    stack[sp++] = s; seen[s] = 1;
+    while (sp){
+      const p = stack[--sp], x = p % W, y = (p - x) / W;
+      area++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const o of [x > 0 ? p - 1 : -1, x < W - 1 ? p + 1 : -1, y > 0 ? p - W : -1, y < H - 1 ? p + W : -1]){
+        if (o < 0 || seen[o]) continue;
+        const a = o * 3, b = p * 3;
+        if (Math.abs(S[a] - S[b]) <= 7 && Math.abs(S[a + 1] - S[b + 1]) <= 7 && Math.abs(S[a + 2] - S[b + 2]) <= 7 && Math.abs(S[a] - r0) <= 22 && Math.abs(S[a + 1] - g0) <= 22 && Math.abs(S[a + 2] - b0) <= 22){ seen[o] = 1; stack[sp++] = o; }
+      }
+    }
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    if (area >= n * .001 && bw >= 10 && bh >= 10 && bw < W * .8 && area / (bw * bh) >= .86) boxes.push({x: x0, y: y0, w: bw, h: bh, area});
+  }
+  boxes.sort((a, c) => c.area - a.area);
   // does the hue move along a ramp? Pairs of main colours in one family, one lighter than the other
   const coarse = new Map();
   for (const [key, count] of hist){ const k5 = (key >> 19 & 31) << 10 | (key >> 11 & 31) << 5 | (key >> 3 & 31); coarse.set(k5, (coarse.get(k5) || 0) + count); }
@@ -425,12 +468,12 @@ const still = () => {
   }
   const palette = [...hist.entries()].sort((a, b) => b[1] - a[1]).slice(0, 48).map(([key, count]) => ['#' + key.toString(16).padStart(6, '0'), count]);
   return {colours: hist.size, rare: rare / hist.size, black: black / n, dead: dead / n, grey: grey / Math.max(1, mids), mix: mixes / Math.max(1, edges), edges,
-    flatMax: flatMax / n, flatBig: flatBig / n, flatAt: [flatAt % W, Math.floor(flatAt / W)], seams: seams.slice(0, 12), tiles: tiles.slice(0, 6), drift: weight ? drift / weight : null,
+    flatMax: flatMax / n, flatBig: flatBig / n, flatAt: [flatAt % W, Math.floor(flatAt / W)], seams: seams.slice(0, 12), tiles: tiles.slice(0, 6), boxes: boxes.slice(0, 12), boxShare: boxes.reduce((s, b) => s + b.area, 0) / n, drift: weight ? drift / weight : null,
     hues: hues.map(x => x / Math.max(1, huesN)), palette};
 };
 
 // The inspection sheet. Plain canvas work, after the scene's been measured.
-const sheet = ({got, stats}) => {
+const sheet = async ({got, stats, phone}) => {
   const v = __v, c = v.canvas, W = c.width, H = c.height, Z = W < 500 ? 2 : 1, FW = W * Z, FH = H * Z, n = W * H;
   const M = 12, out = Object.assign(document.createElement('canvas'), {width: FW * 2 + M * 3, height: FH * 2 + M * 5 + 216});
   const g = out.getContext('2d');
@@ -450,19 +493,33 @@ const sheet = ({got, stats}) => {
   g.drawImage(heat, FW + M * 2, M + 14, FW, FH);
   // suspects: the machine can't judge these, so it points
   const Y0 = M * 2 + 14 + FH;
-  label('Suspects: ruled edges orange, repeats teal, biggest flat patch pink', M, Y0 + 8);
+  label('Suspects: ruled edges orange, repeats teal, biggest flat patch pink, plain boxes white', M, Y0 + 8);
   g.drawImage(c, M, Y0 + 14, FW, FH);
   g.fillStyle = '#ff9a3c';
   for (const s of stats.seams) g.fillRect(M + s.x * Z, Y0 + 14 + s.y * Z, s.w * Z, 1);
   g.fillStyle = 'rgba(79,209,197,.28)';
   for (const t of stats.tiles) g.fillRect(M, Y0 + 14 + t.y * Z, FW, 16 * Z);
+  g.strokeStyle = '#ffffff';
+  for (const b of stats.boxes) g.strokeRect(M + b.x * Z - .5, Y0 + 14 + b.y * Z - .5, b.w * Z + 1, b.h * Z + 1);
   g.strokeStyle = '#ff6fa8';
   g.strokeRect(M + stats.flatAt[0] * Z - .5, Y0 + 14 + stats.flatAt[1] * Z - .5, 40 * Z, 12 * Z);
-  // phone size: a person about 25 points tall
-  const scale = W < 500 ? 1.2 : .6, PW = Math.round(W * scale), PH = Math.round(H * scale), X1 = FW + M * 2;
-  label('At phone size', X1, Y0 + 8);
+  // phone size: what a big iPhone really shows, or in a quick look, the whole frame at about that scale
+  const X1 = FW + M * 2;
+  let PW, PH;
   g.imageSmoothingEnabled = true;
-  g.drawImage(c, X1, Y0 + 14, PW, PH);
+  if (phone){
+    const img = new Image();
+    img.src = phone;
+    await img.decode();
+    PW = Math.min(FW, img.width); PH = Math.min(FH, img.height);
+    label('At phone size: what a big iPhone shows', X1, Y0 + 8);
+    g.drawImage(img, 0, 0, PW, PH, X1, Y0 + 14, PW, PH);
+  } else {
+    const scale = W < 500 ? 1.2 : .6;
+    PW = Math.round(W * scale); PH = Math.round(H * scale);
+    label('At about phone size, with no crop: a full check shows the real thing', X1, Y0 + 8);
+    g.drawImage(c, X1, Y0 + 14, PW, PH);
+  }
   g.imageSmoothingEnabled = false;
   // up close
   if (got.hero){
@@ -616,6 +673,7 @@ export const CHECKS = {
   },
   // depth
   D1(r){ const s = r.stats.seams[0], w = s ? s.w / r.got.width : 0; return {pass: w < .9, got: s ? `longest straight seam is ${pct(w, 0)} of the width, at row ${s.y}` : 'no long seams', limit: 'under 90%', fix: 'Break it: let things stand across it, wobble it with noise, or dither it'}; },
+  D7(r){ const b = r.stats.boxes[0]; return {pass: r.stats.boxShare <= .03, got: `${pct(r.stats.boxShare)} of the frame is plain boxes, in ${r.stats.boxes.length}${b ? `, the biggest ${b.w}x${b.h} at ${b.x},${b.y}` : ''}`, limit: 'at most 3%', fix: 'Give it a form: p.form and sdBox round its edges and turn them to the light. Then ask what it really is, and what would be on it'}; },
   // motion
   M1(r){ return {pass: r.got.run.moved >= .05, got: `${pct(r.got.run.moved)} of the frame moved in ${r.seconds} seconds`, limit: 'at least 5%', fix: 'Ask what lives here, and what moves it'}; },
   M2(r){
@@ -646,7 +704,7 @@ export const CHECKS = {
   },
   M7(r){
     const lanes = Object.entries(r.got.lanes);
-    if (!r.got.hasRare && !lanes.length) return NA("the page doesn't use rare()");
+    if (!r.got.hasRare && !lanes.length) return r.isApp ? {pass: false, got: 'nothing turns up now and then: this page has no rare sights', fix: 'What would turn up here once in a while? See creatures.md'} : NA("the page doesn't use rare()");
     const quick = lanes.filter(([, l]) => (l.gap ? l.gap[0] : 18) < 5);
     return {pass: lanes.length > 0 && !quick.length, got: lanes.length ? `${lanes.length} lanes, ${lanes.reduce((s, [, l]) => s + l.sights.length, 0)} sights${quick.length ? `; ${quick.map(([k]) => k).join(', ')} wait under 5 seconds` : ''}` : 'nothing turns up now and then', limit: 'at least one lane, waits of 5 seconds or more', fix: 'What would turn up here once in a while? See creatures.md'};
   },
@@ -706,7 +764,7 @@ function eyeList(rules, r, file){
     if (m) prior[m[2]] = {ticked: m[1].toLowerCase() === 'x', note: m[3].trim()};
   }
   const walked = wanted.filter(x => prior[x.id] && prior[x.id].ticked && prior[x.id].note.length >= 12);
-  const text = `# The Eye: ${r.name}\n\nThe machine can't judge these. Open sheet.png with the Read tool, and film what needs filming. Tick a rule only once you've really looked, and say what you saw: \`- [x] L2 ... note: the moon's upper left, and every pine is lit on that side\`. A problem stays unticked until it's fixed. If you change the art, untick what it touches.\n\n${wanted.map(x => `- [${prior[x.id] && prior[x.id].ticked ? 'x' : ' '}] ${x.id} ${x.text} (${x.how.replace(/^Eye:?\s*/, '')}) note: ${prior[x.id] ? prior[x.id].note : ''}`).join('\n')}\n`;
+  const text = `# The Eye: ${r.name}\n\nThe machine can't judge these. Open sheet.png with the Read tool, and film what needs filming. Tick a rule only once you've really looked, and say what you saw: \`- [x] L2 ... note: the moon's upper left, and every pine is lit on that side\`. If a rule can't apply here, tick it and say why: \`note: nobody walks in this scene\`. A problem stays unticked until it's fixed. If you change the art, untick what it touches.\n\n${wanted.map(x => `- [${prior[x.id] && prior[x.id].ticked ? 'x' : ' '}] ${x.id} ${x.text} (${x.how.replace(/^Eye:?\s*/, '')}) note: ${prior[x.id] ? prior[x.id].note : ''}`).join('\n')}\n`;
   return {text, total: wanted.length, walked: walked.length};
 }
 
@@ -729,7 +787,7 @@ async function statusScreen(browser, r, results, eye, grade, thumb, file){
     const list = results.filter(x => x.chapter === ch && x.status !== 'na'), ok = list.filter(x => x.status === 'pass' || x.status === 'excused').length;
     if (!list.length) return `<div class="row"><b>${ch.toUpperCase()}</b><span class="bar"></span><i>-</i></div>`;
     return `<div class="row"><b>${ch.toUpperCase()}</b><span class="bar">${list.map(x => `<u class="${x.status === 'pass' ? 'ok' : x.status === 'excused' ? 'eye' : x.level === 'Law' ? 'law' : 'bad'}"></u>`).join('')}</span><i>${ok}/${list.length}</i></div>`;
-  }).join('') + `<div class="row"><b>THE EYE</b><span class="bar">${Array.from({length: eye.total}, (_, i) => `<u class="${i < eye.walked ? 'eye' : ''}"></u>`).join('')}</span><i>${eye.walked}/${eye.total}</i></div>`;
+  }).join('') + `<div class="row"><b>THE EYE</b><span class="bar">${Array.from({length: eye.total}, (_, i) => `<u class="${i < eye.walked ? 'eye' : ''}"></u>`).join('')}</span><i>${eye.walked}/${eye.total}</i></div>` + (results.some(x => x.status === 'na') ? `<div class="row"><b>UNCHECKED</b><span class="bar"></span><i>${results.filter(x => x.status === 'na').length}</i></div>` : '');
   const fails = results.filter(x => x.status === 'fail').sort((a, b) => (a.level === 'Law' ? 0 : 1) - (b.level === 'Law' ? 0 : 1));
   const gremlins = fails.length ? fails.slice(0, 4).map(x => `<li><b${x.level === 'Law' ? ' class="law"' : ''}>${x.id}</b> ${x.text.replace(/</g, '&lt;')}</li>`).join('') + (fails.length > 4 ? `<li class="more">and ${fails.length - 4} more</li>` : '') : '<li class="none">None found. The Eye rules are the machine\'s blind spot.</li>';
   await page.setContent(`<!doctype html><meta charset="utf-8"><style>
@@ -753,19 +811,29 @@ async function statusScreen(browser, r, results, eye, grade, thumb, file){
   await page.close();
 }
 
+// What a phone really shows, at the size people see it: only the part of the canvas that's in view.
+async function phoneLook(browser, target){
+  const {context, page} = await openScene(browser, {...target, phone: true});
+  await page.evaluate(() => __v.warm(6));
+  const clip = await page.evaluate(() => { const r = __v.canvas.getBoundingClientRect(), x = Math.max(0, r.left), y = Math.max(0, r.top); return {x, y, width: Math.min(innerWidth, r.right) - x, height: Math.min(innerHeight, r.bottom) - y}; });
+  const shot = clip.width > 0 && clip.height > 0 ? await page.screenshot({clip, scale: 'css'}) : null;
+  await context.close();
+  return shot && `data:image/png;base64,${shot.toString('base64')}`;
+}
+
 async function checkOne(browser, target, rules, o){
-  const {file, place} = target, seconds = +(opt.seconds || 24);
+  const {file, place} = target, seconds = +(opt.seconds || 24), phone = opt.quick ? null : await phoneLook(browser, target);
   const {context, page, errors, info} = await openScene(browser, target);
-  const r = {name: place || basename(file, extname(file)), place, seconds, isApp: info.isApp, errors};
+  const stem = basename(file, extname(file)), r = {name: place || (stem === 'index' ? basename(dirname(file)) : stem), place, seconds, isApp: info.isApp, errors};
   if (!info.canvas) throw new Error(`No canvas on ${file}`);
   r.got = await page.evaluate(watch, {seconds, place});
   r.errors.push(...await page.evaluate(() => __v.thrown));
   r.got.hasRare = await page.evaluate(() => __v.has('rare'));
   r.stats = await page.evaluate(still);
-  const sheetUrl = await page.evaluate(sheet, {got: r.got, stats: r.stats});
+  const sheetUrl = await page.evaluate(sheet, {got: r.got, stats: r.stats, phone});
   const thumb = await page.evaluate(() => __v.canvas.toDataURL('image/png'));
   if (!opt.quick){
-    r.soak = await page.evaluate(soak, {minutes: +(opt.minutes || 3)}).catch(e => ({skipped: `no soak here (${e.message.split('\n')[0].slice(0, 60)})`}));
+    r.soak = await page.evaluate(soak, {minutes: +(opt.minutes || 3)}).catch(e => ({skipped: `the long run couldn't happen here (${e.message.split('\n')[0].slice(0, 60)})`}));
     if (r.soak.calls) Object.assign(r.got, {calls: r.soak.calls, where: r.soak.where, rects: r.soak.rects, draws: r.soak.draws});
   }
   await context.close();
@@ -785,13 +853,16 @@ async function measureCost(browser, target){
   const {context, page} = await openScene(browser, target);
   const ms = await page.evaluate(({place}) => {
     __q.unwrap();
-    const v = __v, real = () => Performance.prototype.now.call(performance), g = v.canvas.getContext('2d');
+    const v = __v, real = () => Performance.prototype.now.call(performance);
+    // Copying a pixel off to its own little canvas makes the browser finish the drawing before the clock stops. Reading the
+    // page's own canvas would too, but after a few hundred reads the numbers jump tenfold. An empty page comes to .3 ms this way.
+    const pg = Object.assign(document.createElement('canvas'), {width: 1, height: 1}).getContext('2d', {willReadFrequently: true});
     v.warm(3);
     // the fastest of three goes: anything else running on the machine only ever slows it down
     let best = Infinity;
     for (let go = 0; go < 3; go++){
       const t0 = real();
-      for (let f = 0; f < 100; f++){ v.tick(.033); g.getImageData(0, 0, 1, 1); }
+      for (let f = 0; f < 100; f++){ v.tick(.033); pg.drawImage(v.canvas, 0, 0, 1, 1, 0, 0, 1, 1); pg.getImageData(0, 0, 1, 1); }
       best = Math.min(best, (real() - t0) / 100);
     }
     return best;
@@ -822,6 +893,10 @@ function printOne(name, res, outDir){
   if (opt.quick) console.log("  A quick look: no long run, reduced motion, phone or cost, so this isn't the rank yet.");
   console.log('  ' + CHAPTERS.map(ch => { const l = results.filter(x => x.chapter === ch && x.status !== 'na'); return l.length ? `${ch} ${l.filter(x => x.status === 'pass' || x.status === 'excused').length}/${l.length}` : `${ch} -`; }).join('   '));
   for (const x of results.filter(x => x.status === 'excused')) console.log(`  Excused, on purpose: ${x.id}, ${x.excuse}. (${x.got})`);
+  // a rule it couldn't check isn't a rule that passed. A quick look has already said what it skips
+  const unchecked = results.filter(x => x.status === 'na' && !/quick check/.test(x.got));
+  if (unchecked.length) console.log("  NOT CHECKED, so these don't count either way");
+  for (const x of unchecked) console.log(`  - ${x.id} ${x.text.split('.')[0]}: ${x.got}`);
   const fails = results.filter(x => x.status === 'fail').sort((a, b) => (a.level === 'Law' ? 0 : 1) - (b.level === 'Law' ? 0 : 1));
   if (fails.length) console.log('  GREMLINS');
   for (const x of fails){
@@ -844,7 +919,7 @@ async function main(){
   if (!opt.page){ console.log(`Usage: the top of ${fileURLToPath(import.meta.url)} says how.`); process.exit(1); }
   const file = resolve(opt.page), root = opt.root ? resolve(opt.root) : dirname(file), server = await serve(root), port = server.address().port;
   const browser = await chromium.launch({channel: 'chrome', headless: true, args: ['--mute-audio']});
-  const base = {file, root, port, who: opt.who, seed: +(opt.seed || 2026)}, out = resolve(opt.out || 'quest');
+  const base = {file, root, port, who: opt.who, seed: +(opt.seed || 2026)}, out = opt.out ? resolve(opt.out) : join(dirname(file), 'quest');
   let places = [opt.place && opt.place !== 'all' ? opt.place : null];
   if (opt.place === 'all'){
     const {context, page} = await openScene(browser, base);
@@ -889,6 +964,9 @@ async function selftest(rules){
     if (!saved.quick) delete opt.quick;
     const results = judge(rules, one.r), failed = results.filter(x => x.status === 'fail').map(x => x.id);
     const missing = (expected.fails || []).filter(x => !failed.includes(x)), wrong = (expected.passes || []).filter(x => failed.includes(x));
+    // not a rule, only a pointer for the Eye, but a pointer that cries wolf gets ignored
+    if (expected.tiles === true && !one.r.stats.tiles.length) missing.push('tiles');
+    if (expected.tiles === false && one.r.stats.tiles.length) wrong.push('tiles');
     if (expected.noLaws) for (const x of results) if (x.status === 'fail' && x.level === 'Law') wrong.push(x.id);
     for (const id of expected.fails || []) if (failed.includes(id)) caught.add(id);
     const ok = !missing.length && !wrong.length;

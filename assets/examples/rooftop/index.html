@@ -1,0 +1,36 @@
+<!doctype html>
+<!--
+  A rooftop garden, high above a big city, at night. To use it: keep the <header> and the two scripts,
+  put your site in <main>, and set --page below to your page colour. kit.js is the Painted Pixels
+  toolkit (unchanged but for SW = 480); rooftop.js is the scene, and it starts with the walk of the place.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0a1f">
+<link rel="icon" href="data:,">
+<title>A rooftop garden, high above the city</title>
+<style>
+  /* --page is the colour of the page below the scene. The nearest deck is painted in it, so the two run
+     together with no edge. Change it here and the deck follows. */
+  :root { --page: #0b0a1f; }
+  html, body { margin: 0; background: var(--page); }
+  /* the hero holds its height before anything paints, so nothing below it jumps */
+  .hero { position: relative; overflow: hidden; line-height: 0; height: 31.25vw; background: var(--page); }
+  .hero canvas { position: absolute; top: 0; left: 0; display: block; image-rendering: crisp-edges; image-rendering: pixelated; }
+  main { min-height: 40vh; }   /* only here so the page can scroll: your site replaces it */
+</style>
+</head>
+<body>
+<header class="hero">
+  <i id="splash" hidden></i>
+  <canvas id="world" role="img" aria-label="A rooftop garden at night, high above a big city. Someone with headphones sits on a bench under a small tree strung with lights, with a mug of tea on a table beside them. Beyond the low wall, the towers of the city glow in rows of lit windows, down a long avenue, under a rising moon. A cat sometimes walks the wall, and now and then a plane or a shooting star goes over."></canvas>
+</header>
+<main>
+  <!-- your site goes here -->
+</main>
+<script src="kit.js"></script>
+<script src="rooftop.js"></script>
+</body>
+</html>

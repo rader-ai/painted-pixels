@@ -122,7 +122,9 @@ There's one useful hidden link: on each quarter note the stride is nudged a litt
 
 ## Cost
 
-Budget: **under 5 ms a frame on a laptop** so that an older phone holds its frame rate with the audio running. The app's worlds run from about 1.5 ms (the office) to about 6 (the park, which is over). One measurement is shaky: run it twice with nothing else busy.
+Budget: **under 5 ms a frame on a laptop** so that an older phone holds its frame rate with the audio running. The app's worlds run from about 1 ms (the café and the office) to about 4.5 (the park). An empty page comes to .3 ms, so nearly all of the number is your scene, and `starter.html` on its own is about 2.5. One measurement is shaky: run it twice with nothing else busy.
+
+To measure something yourself, use `look.mjs perf`, or copy one pixel off to a little canvas of its own, as that does, to make the browser finish drawing before you stop the clock. Don't read the page's own canvas with `getImageData`: after a few hundred reads, the numbers jump tenfold and stay there, and whatever you were comparing stops meaning anything.
 
 - Paint once whatever doesn't move. Painting a background is slow; drawing the finished canvas is almost free.
 - Cache sprites in a `Map`, keyed by everything that changes them: `leafClump`, `tuftSprite`, `glowSprite`, `rigFrame`. One clump, a thousand times.

@@ -58,7 +58,7 @@ Grass doesn't sway constantly. **It stands still until a gust comes through.** S
 
 ## Flowers
 
-`flowerPatches(x0, x1, y0, y1, n, kinds, seed, {avoid})` + `drawFlowers`. Five round petals around a heart, a darker crease between each pair, and the petals away from the light in shade. `FLOWER_KINDS`: daisy, peach, pink, blue, butter, poppy.
+`flowerPatches(x0, x1, y0, y1, n, kinds, seed, {avoid})` + `drawFlowers`. Five round petals around a heart, a darker crease between each pair, and the petals away from the light in shade. `FLOWER_KINDS`: daisy, peach, pink, blue, butter, poppy. Flowers are painted for daylight: at night, take the sprite through `litSprite(cv, L)` first, or they glow.
 
 - They grow in **patches of one kind**, not an even sprinkle.
 - They're **bigger toward the front**.

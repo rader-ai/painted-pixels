@@ -118,7 +118,14 @@ function runPlace(canvas, id, {who = 'guy', seated = true, walking = false, spee
 
 const out = PREAMBLE + '\n' + BLOCKS.map(block).join('\n') + POST;
 const dest = join(HERE, '../assets/kit.js');
+const before = readFileSync(dest, 'utf8');
 writeFileSync(dest, out);
+// The examples carry their own copies, at the width of their own worlds, so they move with it
+const wide = text => text.replace(/const SW = \d+/, 'const SW = 480');
+const cabinFile = join(HERE, '../assets/examples/cabin.html'), cabin = readFileSync(cabinFile, 'utf8'), was = wide(before).trimEnd();
+if (cabin.includes(was)) writeFileSync(cabinFile, cabin.replace(was, () => wide(out).trimEnd()));
+else console.log("cabin.html: its copy of the kit doesn't match the last build, so it wasn't updated. Do that by hand.");
+writeFileSync(join(HERE, '../assets/examples/rooftop/kit.js'), wide(out));
 console.log(`kit.js: ${out.split('\n').length} lines, ${(out.length / 1024).toFixed(0)} KB`);
 
 // An index, so nobody has to read the kit to find out what's in it

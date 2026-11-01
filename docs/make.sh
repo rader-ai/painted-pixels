@@ -56,7 +56,7 @@ clip cough 0010 --place garden --who guy --at 2 --act cough --seconds 2.6 --loop
 # the referee's own status screens: the forest on the day it got a scene of its own, and the forest now
 if [ "$ONLY" = "  " ] || [[ "$ONLY" == *" status "* ]]; then
   git -C "$(dirname "$PAGE")" show f152449:index.html > "$TMP/then.html"
-  node ../scripts/validate.mjs --page "$TMP/then.html" --place forest --quick --seconds 16 --out "$TMP/then" >/dev/null || true
+  node ../scripts/validate.mjs --page "$TMP/then.html" --place forest --out "$TMP/then" >/dev/null || true
   node ../scripts/validate.mjs --page "$PAGE" --place forest --out "$TMP/now" >/dev/null || true
   magick "$TMP/then/status.png" -strip -define webp:lossless=true "$OUT/status-then.webp"
   magick "$TMP/now/status.png" -strip -define webp:lossless=true "$OUT/status-now.webp"

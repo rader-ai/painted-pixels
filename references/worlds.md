@@ -23,14 +23,15 @@ In any other project, steps 1 to 3 are the whole job: call `runPlace(canvas, 'na
 - **Rare:** dragon crossing the moon, comet, black cat on the wall. Reads while walking.
 
 **Rainy office** (night, plum and navy; the girl at her desk). `gallery/office.png`
-- **Light:** amber lamp, teal monitor, string of bulbs. The moon's only in the window.
-- **Layers:** sky and city seen through the window, room, things outside clipped to the window, rain on the glass, window bars redrawn, lamp cone, person, cat.
-- **Moves:** beads running down the glass, far windows, headlights, steam, a monitor's bars with the music.
+- **Light:** amber lamp, teal monitor, string of bulbs. The moon's only in the window, and the lamp doesn't reach the far side of the room.
+- **Layers:** sky, moon, clouds; the city, in one lens down an avenue; windows and traffic; rain; the glass; then `front`, the whole room with its window cut out: frame, curtains, desk, screen, chair, floor. Then the screen's bars, lamp, steam, person, cat.
+- **Moves:** beads running down the glass, far windows, cars on the wet avenue, steam, a record going round, a monitor's bars with the music.
 - **Rare:** plane, lightning. The cat comes down from the shelf and sits on the keyboard.
 
 **Coffee shop** (day inside, warm brown; the guy in a booth). `gallery/cafe.png`
-- **Light:** pendant lamps; blue daylight from the street. It's one of the warmest and calmest scenes because the street does the moving.
-- **Moves:** clouds and people in the window, barista, steam, a wall clock showing the real time, cat on the ledge, a chalkboard with the music on it.
+- **Light:** two pendants, warm, on the right; blue daylight from the window on the left. Outside, a high sun behind us, so the far fronts are lit from the upper left and our own building's shadow lies across the near half of the road. It's one of the warmest and calmest scenes because the street does the moving.
+- **Layers:** sky and clouds; hazy towers, the street's fronts, the road; people on the far pavement; what stands at the kerb; whatever drives by; then `front`, the whole room with its window cut out, so that nothing outside can land on the booth.
+- **Moves:** clouds, trees and people in the window, barista, steam, a wall clock showing the real time and swinging its pendulum, cat on the ledge, a chalkboard with the music on it.
 - **Rare:** car, bus, cyclist (it's a street, so they come often). Sips from a mug that's otherwise on the table.
 
 **Garden** (morning; the girl on a crate). `gallery/people-life.png`

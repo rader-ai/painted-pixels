@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>fixture</title><style>html,body{margin:0;background:#111}canvas{display:block;image-rendering:pixelated}</style><canvas id="c" width="640" height="300"></canvas>
+<script>const c=document.getElementById("c"),g=c.getContext("2d");g.imageSmoothingEnabled=false;
+const bay=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5],R=[[14,10,40],[28,18,64],[50,30,84],[84,46,92],[124,66,92],[170,96,84],[214,136,92],[244,186,120]];
+const hx=a=>"rgb("+a.join(",")+")",put=(x,y,u)=>{const t=Math.max(0,Math.min(.999,u))*(R.length-1)+(bay[(y&3)*4+(x&3)]/16-.5)*.8,i=Math.max(0,Math.min(R.length-1,Math.round(t)));g.fillStyle=hx(R[i]);g.fillRect(x,y,1,1)};
+let a=7;const rnd=()=>(a=a*16807%2147483647)/2147483647;
+for(let y=0;y<300;y++)for(let x=0;x<640;x++){const floor=y>190,q=(x-320)/230;put(x,y,floor?.12+.62*Math.exp(-q*q):.25+y/190*.2)}
+function frame(){requestAnimationFrame(frame)}requestAnimationFrame(frame);</script>

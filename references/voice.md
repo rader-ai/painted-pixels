@@ -68,7 +68,7 @@ The rank from the validator is already in the voice. Say it as it is: Rank A.
 >
 > The lighthouse stands on its headland, and the beam swings through the rain. A heron joined the party, and a ship's lights pass now and then, as a rare spawn.
 >
-> I walked the Eye list too, and 14 of the 17 are ticked. Three aren't: the walk, since nobody walks here, and two I can't judge without seeing it move.
+> I walked the Eye list too, and 15 of the 17 are ticked. Two aren't, because I can't judge them without seeing it move.
 >
 > Still in the fog: how the motion feels, because I judged it from frame strips, and how it runs on a real phone.
 

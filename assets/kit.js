@@ -81,6 +81,11 @@ const C_SUNSET = ['#4a2e64','#7a4474','#b86478','#e8907e','#ffc29a','#ffe6c4'];
 const C_NIGHT  = ['#0e1230','#161c40','#222a54','#343e6c','#4c5884'];
 const C_MOONLIT = ['#0a0e2a','#121838','#1c2448','#2a3460','#3e4c7c','#6a7cac','#b4c2e8'];
 
+// How far a pixel is outside a rounded box, in canvas pixels: negative inside
+const sdBox = (X, Y, x0, y0, x1, y1, r = 0) => {
+  const qx = Math.abs(X + .5 - (x0 + x1) / 2) - (x1 - x0) / 2 + r, qy = Math.abs(Y + .5 - (y0 + y1) / 2) - (y1 - y0) / 2 + r;
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+};
 function painter(w = DW, h = DH, opts = {}){
   const wrap = !!opts.wrap;
   const img = new ImageData(w, h), d = img.data;
@@ -104,8 +109,22 @@ function painter(w = DW, h = DH, opts = {}){
   const box = (x, y, ww, hh) => [R(x), R(y), R(x) + Math.max(1, R(ww)), R(y) + Math.max(1, R(hh))];
 
   const p = {
-    put, get, w, h, noise, hsh,
+    put, get, w, h, noise, hsh, pick, ramp,
     sun: -1,   // which side bevels and domes are lit from: -1 left, 1 right
+    // cuts back to nothing, so that whatever's drawn behind this layer shows through: a window in a wall
+    clear(x, y, ww, hh){ const [X0, Y0, X1, Y1] = box(x, y, ww, hh); for (let Y = Math.max(0, Y0); Y < Math.min(h, Y1); Y++) for (let X = Math.max(0, X0); X < Math.min(w, X1); X++) d[((Y * w + X) << 2) + 3] = 0; },
+    // Something solid, in canvas pixels, along a ramp. shape(X, Y) says how far outside it a pixel is, negative inside
+    // (sdBox makes one). Near its edge it turns toward the light or away, over `round` pixels, so it has a form and not just
+    // an outline. o: base, how light its face is; gain, how much its edges catch; lx, ly, which way the light is; shade(X, Y), anything more.
+    form(X0, Y0, X1, Y1, cols, shape, o = {}){
+      const rp = ramp(cols), {base = .5, gain = .45, lx = -.6, ly = -.8, round = 3, shade} = o;
+      for (let Y = Y0; Y < Y1; Y++) for (let X = X0; X < X1; X++){
+        const sd = shape(X, Y);
+        if (sd > 0) continue;
+        const nx = shape(X + 1, Y) - shape(X - 1, Y), ny = shape(X, Y + 1) - shape(X, Y - 1), n = Math.hypot(nx, ny) || 1, e = Math.max(0, 1 + sd / round);
+        put(X, Y, pick(rp, base + (nx * lx + ny * ly) / n * e * e * gain + (shade ? shade(X, Y) : 0), X, Y));
+      }
+    },
     canvas(){ const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').putImageData(img, 0, 0); return c; },
     // A lawn of grass tufts: little fans of pointed blades, planted from the back to the
     // front so nearer tufts overlap farther ones. They grow from tiny V's at the back to
@@ -513,8 +532,9 @@ const CHARS = {
 // ======== bats ========
 const BAT = [
   ['k.....k', 'kk.k.kk', '.kkkkk.', '..k.k..'],
-  ['.......', '..kkk..', 'kkkkkkk', 'k.k.k.k'],
+  ['..k.k..', '.kkkkk.', 'kk.k.kk', 'k.....k'],
 ];
+const FAR_BIRD = [['k...k', '.k.k.', '..k..'], ['.....', 'kkkkk', '..k..']];
 
 // ======== people ========
 // ---------- people ----------
@@ -728,8 +748,8 @@ const LIGHTS = {
   office: {id: 'o', dim: .82, tint: [30, 20, 50], tintAmt: .14, rim: '#7fe8dc', rimAmt: .38, side: 1, far: .72, ink: '#06040a',
     spots: [{x: 172, y: 86, r: 110, col: '#ffb060'}, {x: 120, y: 88, r: 60, col: '#4fd1c5'}]},
   cafe:   {id: 'k', dim: .96, tint: [60, 30, 10], tintAmt: .08, rim: '#ffd090', rimAmt: .25, side: 1, rim2: '#bcd8ff', rimAmt2: .3, side2: -1, ink: '#140a06',
-    spots: [{x: 72, y: 60, r: 90, col: '#cfe4ff'}, {x: 168, y: 24, r: 90, col: '#ffc070'}, {x: 300, y: 24, r: 90, col: '#ffc070'}]},
-  beach:  {id: 'b', dim: .86, tint: [70, 30, 80], tintAmt: .16, rim: '#ffb070', rimAmt: .55, side: 1, ink: '#34204a',
+    spots: [{x: 72, y: 60, r: 90, col: '#cfe4ff'}, {x: 149, y: 24, r: 90, col: '#ffc070'}, {x: 300, y: 24, r: 90, col: '#ffc070'}]},
+  beach:  {id: 'b', dim: .72, tint: [70, 30, 80], tintAmt: .24, rim: '#ffb070', rimAmt: .75, side: 1, ink: '#34204a',
     key: {x: 160, horizon: 76, long: 1.9, shadow: .36, col: '#ffb070'}},
   garden: {id: 'g', dim: 1, tint: [0, 0, 0], tintAmt: 0, rim: '#fff6d8', rimAmt: .3, side: -1, ink: '#14301f', seat: 124,
     key: {x: 40, horizon: 100, long: .5, shadow: .3, col: '#fff6d8'}},
@@ -1298,7 +1318,7 @@ const CLUMPS = new Map(), MODELS = new Map();
 // from (-1 left, 1 right); shade (-1..1) darkens or lifts the whole clump; blooms are
 // [light, mid, dark] colour triples for flowers tucked among the sunlit leaves.
 function leafClump(r, pal, variant, shade = 0, blooms, sun = -1){
-  const key = `${r.toFixed(1)}|${pal[2]}|${variant}|${shade}|${blooms ? blooms.length : 0}|${sun}`;
+  const key = `${r.toFixed(1)}|${pal.key ||= pal.join()}|${variant}|${shade}|${blooms ? blooms.key ||= blooms.join() : 0}|${sun}`;
   if (CLUMPS.has(key)) return CLUMPS.get(key);
   const R = Math.max(3, r * HD), size = Math.ceil(R * 2.5) + 8, c = size / 2;
   const p = painter(size, size), rp = pal.map(rgb), rnd = mulberry32(variant * 131 + Math.round(R * 7));
@@ -2247,7 +2267,23 @@ function heroDraw(k, c, p, X, Y, foot, ground){
   rigDraw(k.g, c, p, X, Y, 1, lit, level);
   // k.holding: something they keep in hand whenever an action isn't giving them something else
   const prop = a && a.prop || k.holding;
-  if (prop) PROPS[prop](k, p, a, X, Y);
+  if (prop) PROPS[prop](inLight(k, lit), p, a, X, Y);
+}
+// What someone holds is in the same light they are. A prop just paints, so its colours change on the way
+// through. A screen or a flame has a light of its own, and paints straight onto k.bare.
+const TONED = new Map();
+function inLight(k, L){
+  const g = k.g, pen = Object.assign(Object.create(k), {bare: g});
+  if (!L || (L.dim === 1 && !L.tintAmt)) return pen;
+  const tone = col => {
+    if (col[0] !== '#') return col;
+    const key = L.id + col;
+    let out = TONED.get(key);
+    if (!out) TONED.set(key, out = css(mixA(rgb(col).map(v => v * L.dim), L.tint, L.tintAmt)));
+    return out;
+  };
+  pen.g = {set fillStyle(col){ g.fillStyle = tone(col); }, fillRect(x, y, w, h){ g.fillRect(x, y, w, h); }};
+  return pen;
 }
 
 // ======== things they carry ========
@@ -2263,9 +2299,10 @@ const PROPS = {
     }
     const tx = Math.round(hx + cs * a.reach), ty = Math.round(hy + sn * a.reach), c = MALLOW[Math.min(5, Math.floor(a.toast * 5.99))];
     life.tip = [tx / HD, ty / HD];
-    g.fillStyle = '#1a1020'; g.fillRect(tx - 3, ty - 2, 7, 5); g.fillRect(tx - 2, ty - 3, 5, 7);
-    g.fillStyle = c; g.fillRect(tx - 2, ty - 2, 5, 5);
-    g.fillStyle = a.toast < .45 ? '#ffffff' : MALLOW[Math.max(0, Math.floor(a.toast * 5.99) - 1)]; g.fillRect(tx - 1, ty - 2, 3, 1);
+    const b = k.bare;   // this end is in the fire's own light
+    b.fillStyle = '#1a1020'; b.fillRect(tx - 3, ty - 2, 7, 5); b.fillRect(tx - 2, ty - 3, 5, 7);
+    b.fillStyle = c; b.fillRect(tx - 2, ty - 2, 5, 5);
+    b.fillStyle = a.toast < .45 ? '#ffffff' : MALLOW[Math.max(0, Math.floor(a.toast * 5.99) - 1)]; b.fillRect(tx - 1, ty - 2, 3, 1);
     if (a.blaze > .02){
       const n = life.clock, h = 3 + a.blaze * 8;
       k.glow(tx / HD, ty / HD - 2, 3 + a.blaze * 5, '#ffa040', .5 * a.blaze);
@@ -2273,8 +2310,8 @@ const PROPS = {
         const fh = h * (1 - Math.abs(f) * .25) * (.7 + vnoise(n * 9, f * 3, 1, 23) * .5);
         for (let j = 0; j < fh; j++){
           const tt = j / fh;
-          g.fillStyle = tt > .7 ? '#d83a1c' : tt > .35 ? '#ff8a2c' : '#ffe08a';
-          g.fillRect(tx + f + Math.round(Math.sin(n * 13 + j) * tt), ty - 2 - j, 1, 1);
+          b.fillStyle = tt > .7 ? '#d83a1c' : tt > .35 ? '#ff8a2c' : '#ffe08a';
+          b.fillRect(tx + f + Math.round(Math.sin(n * 13 + j) * tt), ty - 2 - j, 1, 1);
         }
       }
     }
@@ -2295,7 +2332,7 @@ const PROPS = {
       const lx = Math.round(hx + Math.cos(phi) * i), ly = Math.round(hy - Math.sin(phi) * i);
       g.fillStyle = '#1a1020'; g.fillRect(lx, ly - 1, 3, 2);
       g.fillStyle = '#8a8a9a'; g.fillRect(lx + 1, ly, 1, 1);
-      if (a.lid > .5){ g.fillStyle = vnoise(life.clock * 5, i * 1.3, 1, 29) > .42 ? '#d8f6ff' : '#7fd0f0'; g.fillRect(lx, ly, 1, 1); }
+      if (a.lid > .5){ k.bare.fillStyle = vnoise(life.clock * 5, i * 1.3, 1, 29) > .42 ? '#d8f6ff' : '#7fd0f0'; k.bare.fillRect(lx, ly, 1, 1); }
     }
     g.fillStyle = '#1a1020'; g.fillRect(x - 1, y - 1, hinge + 3, 4);
     g.fillStyle = '#a0a0b0'; g.fillRect(x, y, hinge + 1, 1); g.fillStyle = '#6a6a7a'; g.fillRect(x, y + 1, hinge + 1, 1);
@@ -2315,7 +2352,8 @@ PROPS.book = (k, p, a, X, Y) => {
 PROPS.phone = (k, p, a, X, Y) => {
   const g = k.g, x = X + p.near[0] + 1, y = Y + p.near[1] - 4;
   g.fillStyle = '#1a1020'; g.fillRect(x - 1, y - 1, 5, 8);
-  g.fillStyle = a.tilt > 2 ? '#a8e8ff' : '#3a3a4a'; g.fillRect(x, y, 3, 6);
+  const glass = a.tilt > 2 ? k.bare : g;
+  glass.fillStyle = a.tilt > 2 ? '#a8e8ff' : '#3a3a4a'; glass.fillRect(x, y, 3, 6);
 };
 PROPS.mug = (k, p, a, X, Y) => {
   const g = k.g, x = X + p.near[0] + 1, y = Y + p.near[1] - 2;
@@ -2353,12 +2391,13 @@ PROPS.rod = (k, p, a, X, Y) => {
 const X0 = p => Math.round(scene.heroX * HD) + p.near[0], Y0 = p => Math.round(scene.heroY * HD) + p.near[1];
 function rainIn(k, dt, x, y, w, h, n, col, key){
   const drops = pst['rain' + key] ||= [];
-  while (drops.length < n) drops.push({x: x + Math.random() * (w + 20), y: y + Math.random() * h});
+  while (drops.length < n) drops.push({x: x + Math.random() * (w + 20), y: y + Math.random() * h, v: 120 + Math.random() * 70, len: 1.5 + Math.random() * 2.5});
   if (reduceMotion) dt = 0;   // for anyone who'd rather things stayed still, it hangs in the air
   for (const d of drops){
-    d.y += 150 * dt; d.x -= 30 * dt;
-    if (d.y > y + h){ d.y = y - 3; d.x = x + Math.random() * (w + 20); }
-    if (d.x >= x && d.x < x + w && d.y >= y) k.rect(d.x, d.y, .5, Math.max(.5, Math.min(3, y + h - d.y)), col);
+    // each at its own speed, and back at its own height, or they settle into rows
+    d.y += d.v * dt; d.x -= d.v * .2 * dt;
+    if (d.y > y + h){ d.y = y - Math.random() * 24; d.x = x + Math.random() * (w + 20); }
+    if (d.x >= x && d.x < x + w && d.y >= y) k.rect(d.x, d.y, .5, Math.max(.5, Math.min(d.len, y + h - d.y)), col);
   }
 }
 // the grey of a rainy sky: heaviest overhead, thinning toward the ground
@@ -2397,9 +2436,11 @@ function outdoorRain(k, dt, key, lands = [[110, 150, 'ground']]){
     h.age += dt;
     const X = Math.round(h.x * HD), Y = Math.round(h.y * HD);
     if (h.water){
-      const r = 1 + h.age * 10, a = Math.max(0, .55 - h.age * 1.1);
+      const near = clamp((h.y - 84) / 66, .2, 1), r = (1 + h.age * 10) * near, a = Math.max(0, .55 - h.age * 1.1);
       g.fillStyle = `rgba(200,214,255,${a.toFixed(2)})`;
-      for (let i = 0; i < 12; i++){ const th = i / 12 * TAU; g.fillRect(Math.round(X + Math.cos(th) * r), Math.round(Y + Math.sin(th) * r * .35), 1, 1); }
+      // far off it's only a glint, and it takes a good size before you'd see it was round
+      if (r < 3.2) g.fillRect(X - Math.round(r), Y, Math.round(r * 2) + 1, 1);
+      else for (let i = 0, n = Math.ceil(r * 3); i < n; i++){ const th = i / n * TAU; g.fillRect(Math.round(X + Math.cos(th) * r), Math.round(Y + Math.sin(th) * r * .28), 1, 1); }
     } else {
       const a = Math.max(0, .8 - h.age * 3.2), up = Math.round(Math.sin(Math.min(1, h.age * 4) * Math.PI) * 2);
       g.fillStyle = `rgba(210,222,255,${a.toFixed(2)})`;
@@ -2468,7 +2509,7 @@ function cloudBuffers(){
     wisp: table(512, 128, [[4, 12, 1, 0], [8, 20, .65, 0], [16, 32, .42, 0], [32, 64, .24, 0]], 307),
     low: table(1024, 1, [[16, 1, 1, 0], [40, 1, .5, 0]], 311),
     D: new Float32Array(CLOUD_MAX_W * CLOUD_MAX_H), T: new Float32Array(CLOUD_MAX_W * CLOUD_MAX_H),
-    top: new Float32Array(CLOUD_MAX_W), bot: new Float32Array(CLOUD_MAX_W), mid: new Float32Array(CLOUD_MAX_W), img, u32: new Uint32Array(img.data.buffer), luts: new Map(),
+    top: new Float32Array(CLOUD_MAX_W), bot: new Float32Array(CLOUD_MAX_W), mid: new Float32Array(CLOUD_MAX_W), warp: new Float32Array(CLOUD_MAX_W), img, u32: new Uint32Array(img.data.buffer), luts: new Map(),
   };
   return CLOUD_BUF;
 }
@@ -2545,7 +2586,7 @@ function newCloud(o, r, grown, edge){
 }
 // fills the density buffer for one cloud
 function cloudDensity(c, clock){
-  const B = cloudBuffers(), {D, top, bot, mid, low} = B, W = c.W, H = c.H, A = c.kind === 'wisp' ? B.wisp : B.puff, grown = c.life;
+  const B = cloudBuffers(), {D, top, bot, mid, low, warp} = B, W = c.W, H = c.H, A = c.kind === 'wisp' ? B.wisp : B.puff, grown = c.life;
   // Everything slides by fractions of a pixel and is read between its table's cells, so that a
   // cloud changes a few pixels at a time instead of jumping whenever a layer moves one whole pixel.
   const around = (v, n) => ((v % n) + n) % n + n;
@@ -2580,13 +2621,16 @@ function cloudDensity(c, clock){
       bot[x] = m + dn * Math.sqrt(pr) * (.35 + (e + .5) * 1.15);
     }
     const reach = fray * .95 + bias;
+    // smoothed along the row: where it jumps from one column to the next, a cloud grows flat-sided slabs
+    const warpAt = v => { const i = v | 0, p = A[wRow | (i & 511)]; return p + (A[wRow | ((i + 1) & 511)] - p) * (v - i); };
+    for (let x = 0; x < W; x++){ let sum = 0; for (let j = -4; j <= 4; j++) sum += warpAt(x + j + wx); warp[x] = sum / 9 * 26; }
     for (let y = 0; y < H; y++) for (let x = 0, i = y * W; x < W; x++, i++){
       const tp = top[x], bt = bot[x], m = mid[x];
       let core = y < m ? (y - tp) / Math.max(1.5, m - tp) : (bt - y) / Math.max(1.5, bt - m);
       if (core > 0) core = 1 - (1 - core) * (1 - core);   // rounded through the middle, so there's no crease
       if (core * body + reach < 0){ D[i] = -1; continue; }
       // the slow layer pushes the quick one around, which curdles the edge instead of just waving it
-      const wc = x + wx, wi = wc | 0, w0 = A[wRow | (wi & 511)], w = (w0 + (A[wRow | ((wi + 1) & 511)] - w0) * (wc - wi)) * 26;
+      const w = warp[x];
       const sx = x * .94 + y * .34 + ax + w + 64, sy = y * .94 - x * .34 + ay + w * .5 + 1024, ix = sx | 0, iy = sy | 0, fx = sx - ix, fy = sy - iy;
       const r0 = (iy & 127) << 9, r1 = ((iy + 1) & 127) << 9, c0 = ix & 511, c1 = (ix + 1) & 511;
       const p = A[r0 | c0], q = A[r0 | c1], v = A[r1 | c0], n1 = p + (q - p) * fx + (v - p) * fy + (p - q - v + A[r1 | c1]) * fx * fy;
@@ -2628,7 +2672,7 @@ function cloudShade(c, lut, n, L){
         const dx = x - L.moonX, dy = y - L.moonY, q = dx * dx + dy * dy;
         gain -= Math.min(1, Math.abs(dx) / (150 * HD)) * L.far;
         // right by the moon, the thin edges shine and the thick parts go dark
-        if (q < reach2){ const m = 1 - Math.sqrt(q) / reach, back = .22 + Math.max(0, .95 - d * 2.3); sh += (back - sh) * Math.min(1, m * 1.7); }
+        if (q < reach2){ const m = 1 - Math.sqrt(q) / reach, back = .22 + Math.max(0, .95 - d * veil * 2.3); sh += (back - sh) * Math.min(1, m * 1.7); }
       }
       let idx = Math.floor(sh * gain * n + dither * .4);
       if (idx < 0) idx = 0; else if (idx >= n) idx = n - 1;
@@ -2826,7 +2870,7 @@ function rowSprite(id, rows, pal, dir = 1){
 // ======== sights in a night sky ========
 // ---- sights in a night sky ----
 function cometSight(){
-  const dur = 40, x0 = 80 + Math.random() * 170, y0 = 6 + Math.random() * 20, dir = Math.random() < .5 ? 1 : -1;
+  const dur = 40, x0 = SW * (.25 + Math.random() * .53), y0 = 6 + Math.random() * 20, dir = Math.random() < .5 ? 1 : -1;
   let age = 0;
   return (k, t, dt) => {
     if ((age += dt) > dur) return false;
