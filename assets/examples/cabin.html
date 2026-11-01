@@ -378,8 +378,10 @@ function painter(w = DW, h = DH, opts = {}){
         }
       }
     },
-    vignette(s){
+    // solid: only over what's been painted, for a layer that goes over another with a vignette of its own
+    vignette(s, solid){
       for (let Y = 0; Y < h; Y++) for (let X = 0; X < w; X++){
+        if (solid && d[((Y * w + X) << 2) + 3] === 0) continue;
         const dx = X / w * 2 - 1, dy = Y / h * 2 - 1, v = (dx*dx * .55 + dy*dy * .8 - .3) * s;
         const al = Math.floor((v + bay(X, Y) * .12) * 8) / 8;
         if (al > 0) put(X, Y, [8, 4, 22, Math.min(.65, al)]);
@@ -1341,6 +1343,10 @@ const PAL_LEAF2 = ['#1e3430','#2f5040','#3d7a4e','#5c9c48','#92c43e','#c8e472'];
 const PAL_BLOSS = ['#4a1830','#8a3456','#c05a7c','#e488a2','#f8b6c6','#fff2f6'];
 const PAL_BLOSS2= ['#3e1630','#782e50','#a84c72','#cc7494','#eaa2b8','#fbe0ea'];
 const PAL_FAR   = ['#4a7678','#548280','#608e86','#6e9a8c','#80aa94','#98bea0'];
+const PAL_OAK   = ['#1c3230','#2a4c3c','#39704a','#558f46','#86b03e','#bcd46a'];
+const PAL_OAK2  = ['#1a2e30','#26463c','#336446','#4c8244','#78a43e','#aac862'];
+const PAL_BIRCH = ['#3e5c3a','#567a44','#74984c','#96b45a','#bcd07a','#e0ecac'];
+const PAL_POPLAR= ['#14282c','#1e3c38','#2c5646','#3e7250','#5e925a','#8cb672'];
 const PAL_IVY   = ['#070a14','#0c1a1c','#132a26','#1c3a2e','#2c5038','#4a6e52'];
 const PAL_BARK  = ['#2a1810','#45291a','#62402a','#845a36','#a87848'];
 
@@ -1430,12 +1436,24 @@ function crownClumps(cx, cy, rx, ry, seed, pal, pal2, blooms){
   return list;
 }
 
+// Clumps close together move together, so each little neighbourhood of them is painted once into a sprite of its own,
+// and a whole tree costs a few dozen draws a frame and not a few hundred.
+function bakeClumps(list){
+  const cells = new Map();
+  for (const c of list){ const key = `${Math.floor(c.cx / 15)},${Math.floor(c.cy / 9)}`; if (!cells.has(key)) cells.set(key, []); cells.get(key).push(c); }
+  const groups = [...cells.values()].map(cl => {
+    const parts = cl.map(c => { const cv = leafClump(c.r, c.pal, c.variant, c.shade, c.blooms, c.sun); return {cv, X: Math.round(c.cx * HD - cv.M), Y: Math.round(c.cy * HD - cv.M)}; });
+    const X0 = Math.min(...parts.map(q => q.X)), Y0 = Math.min(...parts.map(q => q.Y)), cv = document.createElement('canvas');
+    cv.width = Math.max(...parts.map(q => q.X + q.cv.width)) - X0; cv.height = Math.max(...parts.map(q => q.Y + q.cv.height)) - Y0;
+    const g = cv.getContext('2d');
+    for (const q of parts) g.drawImage(q.cv, q.X - X0, q.Y - Y0);
+    const mean = f => cl.reduce((a, c) => a + f(c), 0) / cl.length;
+    return {cv, X: X0, Y: Y0, cx: mean(c => c.cx), amp: mean(c => c.amp ?? 1), z: mean(c => c.cy - c.r * .3)};
+  });
+  return groups.sort((a, b) => a.z - b.z);
+}
 function drawClumps(k, list, t, still){
-  for (const c of list){
-    const cv = leafClump(c.r, c.pal, c.variant, c.shade, c.blooms, c.sun);
-    const dx = still ? 0 : Math.round(WIND(c.cx, t) * c.amp);
-    k.g.drawImage(cv, Math.round(c.cx * HD - cv.M) + dx, Math.round(c.cy * HD - cv.M));
-  }
+  for (const b of list.baked ||= bakeClumps(list)) k.g.drawImage(b.cv, b.X + (still ? 0 : Math.round(WIND(b.cx, t) * b.amp)), b.Y);
 }
 
 // An outlined, shaded stroke along a polyline [[x, y, width], ...] (trunks, branches,
@@ -1463,6 +1481,7 @@ function stroke(p, pts, rb, sun = -1){
 function treeModel(s){
   const key = 'T' + JSON.stringify(s);
   if (MODELS.has(key)) return MODELS.get(key);
+  if (s.kind) return treeOfKind(s, key);
   const r = mulberry32(s.seed * 7919 + 3), lean = s.lean || 0, w = s.w || 3, sun = s.sun || -1;
   const fx = s.x + lean, fy = s.y - s.h, ccy = fy - s.ry * .45;
   const top = {x: fx + lean * .3 + (r() - .5) * s.rx * .2, y: ccy - s.ry * .3, rx: s.rx * .55, ry: s.ry * .5};
@@ -1495,15 +1514,100 @@ function treeModel(s){
   MODELS.set(key, m); return m;
 }
 
+// Trees that aren't the same tree. Each kind grows its own way: where it forks, how thick it is, how its limbs go,
+// and what shape that gives its crown. s.kind is one of these, and s is otherwise what treeModel takes.
+const BARKS = {
+  cherry: ['#1e0f0e', '#3a1e1c', '#553028', '#6e4030', '#8e5a42'],
+  birch: ['#3a3438', '#8e887a', '#c6c0b0', '#e6e2d4', '#fdfbf0'],
+  poplar: ['#1c1612', '#33291e', '#4a3c2a', '#62503a', '#7c684c'],
+};
+const TREE_KINDS = {
+  // an old oak: short and enormously thick, and it forks low into heavy limbs that go out more than up, for a crown wider than it's tall
+  oak(s, r){
+    const w = s.w || 5, fx = s.x + (s.lean || 0), fy = s.y - s.h, ccy = fy - s.ry * .5, n = s.lobes || 6, lobes = [], branches = [];
+    for (let i = 0; i < n; i++){
+      const a = Math.PI * (1.02 + (i + .5) / n * .96) + (r() - .5) * .18, d = .54 + r() * .16;
+      lobes.push({x: fx + Math.cos(a) * s.rx * d, y: ccy + Math.sin(a) * s.ry * d * .92, rx: s.rx * (.34 + r() * .1), ry: s.ry * (.36 + r() * .1)});
+    }
+    for (const L of lobes){
+      const ex = L.x, ey = L.y + L.ry * .3, mx = fx + (ex - fx) * .6, my = fy + (ey - fy) * .22;
+      branches.push([[fx, fy + 1.5, w * .6], [mx, my, w * .4], [ex, ey, w * .2]]);
+      for (let t = 0; t < 2; t++){ const a = -Math.PI / 2 + (r() - .5) * 2.2; branches.push([[ex, ey, w * .16], [ex + Math.cos(a) * L.rx * .5, ey + Math.sin(a) * L.ry * .5, w * .08]]); }
+    }
+    lobes.push({x: fx + (r() - .5) * s.rx * .2, y: ccy + s.ry * .02, rx: s.rx * .46, ry: s.ry * .4});
+    return {lobes, branches, trunk: [[s.x, s.y + .5, w * 1.9], [s.x + .2, s.y - 2, w * 1.25], [(s.x + fx) / 2, s.y - s.h * .6, w], [fx, fy, w * .95]], flare: w, cx: fx, cy: ccy};
+  },
+  // a cherry: it forks low and opens like a vase, its limbs arching out and carrying the blossom in flat layers, with dark gaps between them
+  cherry(s, r){
+    const w = s.w || 3.2, fx = s.x + (s.lean || 0), fy = s.y - s.h, lobes = [], branches = [];
+    for (const [dir, reach, lift] of [[-1, 1, .42], [-.5, .66, .92], [.1, .22, 1.16], [.62, .7, .96], [1, 1, .5]]){
+      const ex = fx + dir * s.rx * reach * (.86 + r() * .14), ey = fy - s.ry * lift * (.9 + r() * .2), mx = fx + (ex - fx) * .42, my = fy + (ey - fy) * .62;
+      branches.push([[fx, fy + 1, w * .62], [mx, my, w * .42], [ex, ey, w * .16]]);
+      for (const f of [.46, .74, 1]){
+        lobes.push({x: fx + (ex - fx) * f, y: fy + (ey - fy) * f - s.ry * .06, rx: s.rx * (f === 1 ? .36 + r() * .08 : .3), ry: s.ry * (.22 + r() * .07)});
+        const bx = fx + (ex - fx) * f, by = fy + (ey - fy) * f;
+        branches.push([[bx, by, w * .14], [bx + dir * s.rx * .24 + (r() - .5) * 6, by - s.ry * .1 - r() * 3, w * .07]]);
+      }
+    }
+    return {lobes, branches, trunk: [[s.x, s.y + .5, w * 1.6], [s.x + (fx - s.x) * .4, s.y - s.h * .5, w], [fx, fy, w * .9]], flare: w * .8, cx: fx, cy: fy - s.ry * .7, bark: BARKS.cherry};
+  },
+  // a birch: slim white stems out of one root, and a light, narrow crown of small leaves
+  birch(s, r){
+    const w = s.w || 1.2, lobes = [], branches = [], stems = [], n = s.stems || 3;
+    for (let i = 0; i < n; i++){
+      const side = n === 1 ? 0 : i / (n - 1) * 2 - 1, tall = s.h * (1 - Math.abs(side) * .16 + (r() - .5) * .06), tx = s.x + side * s.rx * .5, ty = s.y - tall;
+      stems.push([[s.x + side * 1.5, s.y + .3, w * 1.3], [s.x + side * 2.6, s.y - tall * .5, w], [tx, ty, w * .45]]);
+      for (let j = 0; j < 5; j++){
+        const f = .4 + j * .15, x = s.x + side * 1.5 + (tx - s.x - side * 1.5) * f, y = s.y - tall * f, ww = s.rx * [.34, .42, .36, .26, .16][j] * (.85 + r() * .3);
+        lobes.push({x: x + (r() - .5) * 2, y, rx: ww, ry: s.rx * .22 + .6});
+        for (const d of [-1, 1]) branches.push([[x, y, w * .3], [x + d * ww * .9, y + 1.5 + r() * 2.5, w * .1]]);
+      }
+    }
+    const [trunk, ...rest] = stems;
+    for (const q of rest) q.stem = true;
+    return {lobes, branches: [...rest, ...branches], trunk, flare: 0, cx: s.x, cy: s.y - s.h * .68, ccry: s.h * .36, bark: BARKS.birch, marks: true};
+  },
+  // a Lombardy poplar: a tall flame of a tree, its limbs held in against the stem, so it has no crown to speak of, only a shape
+  poplar(s, r){
+    const w = s.w || 2.2, H = s.h, top = s.y - H, base = s.y - H * .12, clumps = [];
+    for (let y = top + 1; y < base;){
+      const u = (y - top) / (base - top), half = s.rx * Math.pow(Math.sin(Math.PI * Math.min(1, u * .96 + .04)), .6) * (u > .75 ? 1 - (u - .75) * .8 : 1);
+      for (let j = 0, m = half > 3.4 ? 3 : half > 1.8 ? 2 : 1; j < m; j++) clumps.push({cx: s.x + (m === 1 ? 0 : (j / (m - 1) * 2 - 1) * half * .62) + (r() - .5) * .9, cy: y + (r() - .5) * 1.2, r: Math.max(1.3, half * .55 * (.82 + r() * .3))});
+      y += Math.max(1.2, half * .46);
+    }
+    clumps.forEach((c, i) => { c.variant = (s.seed + i * 7) % 29; c.pal = i % 3 ? s.pal : s.pal2 || s.pal; });
+    return {clumps, branches: [], trunk: [[s.x, s.y + .5, w * 1.3], [s.x, s.y - H * .08, w], [s.x, top + H * .4, w * .5]], flare: w * .5, cx: s.x, cy: top + H * .5, ccry: H * .5, shadow: s.rx * 1.6, bark: BARKS.poplar};
+  },
+};
+function treeOfKind(s, key){
+  const r = mulberry32(s.seed * 7919 + 3), sun = s.sun || -1, t = TREE_KINDS[s.kind](s, r);
+  const clumps = t.clumps || t.lobes.flatMap((L, li) => crownClumps(L.x, L.y, L.rx, L.ry, s.seed + li * 13, s.pal, s.pal2, s.blooms));
+  shadeClumps(clumps, t.cx, t.cy, s.rx, t.ccry || s.ry, sun);
+  clumps.sort((a, b) => (a.cy - a.r * .3) - (b.cy - b.r * .3));
+  const roots = t.flare ? [-1, 1].map(d => [[s.x + d * t.flare * .4, s.y - .8, t.flare * .8], [s.x + d * t.flare * 1.6, s.y + .2, t.flare * .4], [s.x + d * t.flare * 2.6 + (r() - .5), s.y + .6, .5]]) : [];
+  const m = {s, cx: s.x, topY: s.y - s.h, clumps, trunk: t.trunk, branches: t.branches, roots, bark: t.bark, marks: t.marks, shadow: t.shadow};
+  MODELS.set(key, m); return m;
+}
+
 // Paint a tree's shade, roots, branches and trunk into the background.
 function paintTree(p, m){
-  const s = m.s, rb = PAL_BARK.map(rgb);
-  p.ellipse(m.cx, s.y + .6, s.rx * .95, 2, 'rgba(10,30,15,.26)');
-  p.ellipse(m.cx, s.y + .4, s.rx * .55, 1.3, 'rgba(10,30,15,.24)');
+  const s = m.s, rb = (m.bark || PAL_BARK).map(rgb), wide = m.shadow ?? s.rx;
+  p.ellipse(m.cx, s.y + .6, wide * .95, 2, 'rgba(10,30,15,.26)');
+  p.ellipse(m.cx, s.y + .4, wide * .55, 1.3, 'rgba(10,30,15,.24)');
   const sun = s.sun || -1;
   for (const b of m.branches) stroke(p, b, rb, sun);
   for (const rt of m.roots) stroke(p, rt, rb, sun);
   stroke(p, m.trunk, rb, sun);
+  // a birch's black marks, across the stem and wider low down
+  if (m.marks) for (const stem of [m.trunk, ...m.branches.filter(b => b.stem)]){
+    for (let i = 0; i < stem.length - 1; i++){
+      const [x0, y0, w0] = stem[i], [x1, y1] = stem[i + 1];
+      for (let f = 0; f < 1; f += 1 / Math.max(2, Math.abs(y1 - y0) * HD)){
+        const y = y0 + (y1 - y0) * f, x = x0 + (x1 - x0) * f;
+        if (hash2(Math.round(y * HD), i, 83) < .16) p.rect(x - w0 * .4 + hash2(Math.round(y * HD), 2, 83) * w0 * .3, y, w0 * (.3 + hash2(Math.round(y * HD), 3, 83) * .4), .5, '#231e24');
+      }
+    }
+  }
 }
 
 // Shade each clump by where it sits in a crown (sunny top side bright, far bottom side dark).
@@ -1547,6 +1651,40 @@ function hedgeModel(s){
   MODELS.set(key, m); return m;
 }
 
+// Ivy roots where a wall meets the ground and climbs. Its stems fork and wander upward, thinning out, and its leaves follow
+// them, thickest low down, so no patch of leaves ever hangs on a wall with nothing holding it there.
+// o: stems, leaf (its size in pixels), sun (the side the light's on), pal, avoid(X, Y) to keep it off the glass
+function ivyClimb(p, x, baseY, h, seed, o = {}){
+  const r = mulberry32(seed), big = o.leaf === 3, sun = o.sun ?? 1, avoid = o.avoid || (() => false), Y0 = Math.round(baseY * HD), H = Math.round(h * HD), X0 = Math.round(x * HD);
+  const pal = (o.pal || PAL_IVY).map(rgb), stem = rgb(o.stem || '#0b1416'), bark = rgb(o.bark || '#1a2018'), nodes = [], tips = [];
+  for (let i = 0, n = o.stems || 3; i < n; i++) tips.push({X: X0 + Math.round((i - (n - 1) / 2) * (2 + r() * 4)), Y: Y0, left: H * (.5 + r() * .5), lean: (r() - .5) * .5, gen: 0});
+  while (tips.length){
+    const t = tips.pop();
+    while (t.left-- > 0){
+      t.Y--;
+      t.lean = clamp(t.lean + (r() - .5) * .3, -.55, .55);
+      if (r() < Math.abs(t.lean)) t.X += Math.sign(t.lean);
+      if (avoid(t.X, t.Y)){ if (t.gen) break; t.X += t.lean < 0 ? -2 : 2; continue; }
+      p.put(t.X, t.Y, stem);
+      if (!t.gen && t.left > H * .35){ p.put(t.X + 1, t.Y, bark); }
+      nodes.push([t.X, t.Y, t.left]);
+      if (t.gen < 3 && r() < .07) tips.push({X: t.X, Y: t.Y, left: t.left * (.4 + r() * .55), lean: t.lean + (r() < .5 ? -.45 : .45), gen: t.gen + 1});
+    }
+  }
+  nodes.sort((a, b) => a[1] - b[1]);
+  for (const [X, Y, left] of nodes){
+    const low = 1 - (Y0 - Y) / H;
+    if (r() > .42 + low * .5) continue;
+    for (let n = 0, m = 1 + Math.floor(r() * (1.6 + low * 2)); n < m; n++){
+      const LX = X + Math.round((r() - .5) * (big ? 9 : 6) * (.6 + low * .7)), LY = Y + Math.round((r() - .5) * (big ? 5 : 3));
+      if (avoid(LX, LY)) continue;
+      const lit = (sun > 0 ? LX >= X : LX <= X) ? 1 : 0, v = clamp(1 + Math.floor(r() * 2.4) + lit, 0, pal.length - 1), c = pal[v], top = pal[Math.min(pal.length - 1, v + 1)], under = pal[Math.max(0, v - 1)];
+      if (big){
+        for (const [dx, dy, col] of [[-2, 0, c], [-1, -1, top], [0, -1, top], [1, -1, c], [-1, 0, c], [0, 0, c], [1, 0, c], [2, 0, under], [-1, 1, under], [0, 1, c], [1, 1, under], [0, 2, under]]) p.put(LX + dx, LY + dy, col);
+      } else for (const [dx, dy, col] of [[-1, 0, c], [0, 0, c], [1, 0, under], [0, -1, top], [0, 1, under]]) p.put(LX + dx, LY + dy, col);
+    }
+  }
+}
 // Distant trees, painted straight into the background: too far away to sway.
 function paintFarTrees(p, x0, x1, base, pal, seed, sun = -1){
   const r = mulberry32(seed);
@@ -1815,6 +1953,38 @@ function birdSprite(kind, frame, dir){
   const cv = p.canvas(); BIRDS.set(key, cv); return cv;
 }
 
+// A gull a long way off isn't a little bird, it's long wings bent at the wrist, and you'd know it anywhere. Strokes out from the
+// shoulder, dark toward the tips, with the low sun along the top of the near part of each wing.
+const GULL_WINGS = {
+  glide: [[[8, 4], [4, 4], [0, 7]], [[16, 4], [20, 4], [24, 7]]],
+  lift: [[[8, 5], [4, 4], [1, 3]], [[16, 5], [20, 4], [23, 3]]],
+  up: [[[9, 3], [6, 1], [3, 0]], [[15, 3], [18, 1], [21, 0]]],
+  down: [[[8, 7], [4, 8], [1, 11]], [[16, 7], [20, 8], [23, 11]]],
+};
+const GULLS = new Map();
+function gullSprite(frame, dir, small){
+  const key = frame + dir + (small ? 's' : '');
+  if (GULLS.has(key)) return GULLS.get(key);
+  const sc = small ? .62 : 1, W = Math.ceil(25 * sc), H = Math.ceil(12 * sc), p = painter(W, H), S = [12 * sc, 7 * sc], px = (x, y, c) => p.put(dir > 0 ? Math.round(x) : W - 1 - Math.round(x), Math.round(y), rgb(c));
+  for (const wing of GULL_WINGS[frame]){
+    let a = S;
+    wing.forEach(([bx, by], seg) => {
+      const b = [bx * sc, by * sc], n = Math.max(2, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 1.4));
+      for (let i = 0; i <= n; i++){
+        const x = a[0] + (b[0] - a[0]) * i / n, y = a[1] + (b[1] - a[1]) * i / n;
+        px(x, y, seg === 2 ? '#1c1230' : '#3e3054');
+        if (seg < 2 && !small) px(x, y + 1, seg === 0 ? '#3e3054' : '#54406a');
+        if (seg < 2 && frame !== 'down') px(x, y - 1, seg === 0 ? '#ffe0cc' : '#d8a8a8');
+      }
+      a = b;
+    });
+  }
+  if (small){ px(S[0], S[1], '#f4e4e4'); px(S[0] + 1, S[1], '#f4e4e4'); px(S[0] + 2, S[1] - 1, '#f4e4e4'); }
+  else {
+    for (const [x, y, c] of [[9, 8, '#6a5478'], [10, 8, '#9a7a90'], [11, 8, '#e8d4d8'], [12, 8, '#f4e8e8'], [13, 8, '#f4e8e8'], [14, 8, '#e8d4d8'], [10, 9, '#6a5478'], [11, 9, '#9a7a90'], [12, 9, '#9a7a90'], [13, 9, '#9a7a90'], [15, 7, '#f8f0f0'], [16, 7, '#f8f0f0'], [15, 8, '#d8c0c8'], [16, 8, '#c8b0b8'], [17, 7, '#f0a030'], [18, 8, '#c87a20']]) px(x, y, c);
+  }
+  const cv = p.canvas(); GULLS.set(key, cv); return cv;
+}
 // A flock that visits a set of perches. perches: [{x, y, ground}] (feet position, logical).
 // scare(x, y) says whether something nearby should send a bird off.
 function birdLife(k, t, dt, key, n, perches, kinds, opts = {}){
@@ -1871,7 +2041,7 @@ function birdLife(k, t, dt, key, n, perches, kinds, opts = {}){
     else if (b.state === 'in' && b.u > .82) frame = 'flare';
     else frame = Math.floor(t * 14 + b.x) % 2 ? 'up' : 'down';
     if (b.state === 'in' || b.state === 'out') b.dir = (b.state === 'in' ? b.spot.x - b.x : b.to.x - b.x) >= 0 ? 1 : -1;
-    const cv = birdSprite(b.kind, frame, b.dir), X = Math.round(b.x * HD) - 7, Y = Math.round((b.y - (b.hop || 0)) * HD) - cv.height;
+    const wide = b.kind === 'gull' && (frame === 'up' || frame === 'down'), cv = wide ? gullSprite(frame === 'up' ? 'lift' : 'down', b.dir) : birdSprite(b.kind, frame, b.dir), X = Math.round(b.x * HD) - (wide ? 12 : 7), Y = Math.round((b.y - (b.hop || 0)) * HD) - cv.height;
     // on the ground it has a shadow, which comes away from its feet when it hops
     if (b.state === 'perch' && b.perch.ground && k.light) castShadows(k, cv, X, Y, cv.height, Math.round(b.y * HD), k.light, b.x, b.y);
     blit(k, cv, X, Y);
@@ -2212,15 +2382,19 @@ function squirrelAt(pose){
   };
 }
 // across the ground (or along the top of a fence) in short dashes
-function squirrelSight(y, f = 0){
+// behind: where something's standing in its way that it goes behind, so that it's cut off there
+function squirrelSight(y, f = 0, behind = SW + 12){
   return () => {
-    const dir = Math.random() < .5 ? 1 : -1;
-    let x = dir > 0 ? -10 : SW + 10, dash = .5, rest = 0, flick = 0;
+    const dir = Math.random() < .5 ? 1 : -1, end = behind + 10;
+    let x = dir > 0 ? -10 : end, dash = .5, rest = 0, flick = 0;
     return (k, t, dt) => {
       if (rest > 0){ rest -= dt; flick = Math.sin(t * 16) > .3 ? 1 : 0; if (rest <= 0) dash = .35 + Math.random() * .9; }
       else { x += dir * 46 * dt; flick = Math.floor(t * 18) % 2; if ((dash -= dt) <= 0) rest = .4 + Math.random() * 1.6; }
+      const g = k.g, cut = behind < SW;
+      if (cut){ g.save(); g.beginPath(); g.rect(0, 0, Math.round(behind * HD), DH); g.clip(); }
       blit(k, shapeSprite('sq' + flick, 15, 9, squirrelAt(flick), SQUIRREL_PAL, dir), x * HD, y * HD - 8);
-      return dir > 0 ? x < SW + 12 : x > -12;
+      if (cut) g.restore();
+      return dir > 0 ? x < end : x > -12;
     };
   };
 }
@@ -2512,7 +2686,8 @@ let CLOUD_BUF = null;
 function cloudBuffers(){
   if (CLOUD_BUF) return CLOUD_BUF;
   // tiled noise. Each layer: cells across, cells down, strength, and whether it's folded in the
-  // middle, which makes rounded lumps with creases between them
+  // middle, which makes domes with a tight crease between them. A plain fold makes planes, and lit
+  // planes meeting along a ridge look like crumpled paper, or a mountain.
   const table = (W, H, layers, seed) => {
     const out = new Float32Array(W * H);
     layers.forEach(([cx, cy, amp, fold], l) => {
@@ -2524,7 +2699,8 @@ function cloudBuffers(){
           const fx = x / W * cx, x0 = Math.floor(fx), ux = fx - x0, ex = ux * ux * (3 - 2 * ux), x1 = (x0 + 1) % cx;
           const a = cells[y0 * cx + x0], b = cells[y0 * cx + x1], c = cells[y1 * cx + x0], d = cells[y1 * cx + x1];
           const v = a + (b - a) * ex + (c - a) * ey + (a - b - c + d) * ex * ey;
-          out[y * W + x] += (fold ? Math.abs(v * 2 - 1) : v) * amp;
+          const a2 = Math.abs(v * 2 - 1);
+          out[y * W + x] += (fold ? 1 - (1 - a2) * (1 - a2) : v) * amp;
         }
       }
     });
@@ -2575,17 +2751,17 @@ function newCloud(o, r, grown, edge){
     // a scrap, torn off or just starting
     w = o.w0 * (.3 + r() * .45);
     up = Math.max(5, w * tall * HD * (1 + r() * .6)); dn = up * (.5 + r() * .5);
-    Object.assign(c, {body: .8, fray: 1.5, softTop: .16, softBot: .36, strength: .9, bright: .95, deep: .55, relief: 1.2, rise: 8 + r() * 12, fade: 10 + r() * 16, span: 30 + r() * 50, v: o.speed * (.7 + r() * .6)});
+    Object.assign(c, {body: .8, fray: .95, softTop: .16, softBot: .36, strength: .9, bright: .95, deep: .55, relief: 1.2, rise: 8 + r() * 12, fade: 10 + r() * 16, span: 30 + r() * 50, v: o.speed * (.7 + r() * .6)});
   } else if (kind === 'bank'){
     // a long low layer, broken along the top and ragged underneath
     w = Math.min(CLOUD_MAX_W / HD - 20, span * (1.15 + r() * .6));
     up = Math.max(5, w * tall * HD * (.38 + r() * .3)); dn = up * (.6 + r() * .5);
-    Object.assign(c, {body: .85, fray: 1.35, softTop: .18, softBot: .42, strength: .94, bright: .92, deep: .55, relief: 1.1, rise: 24 + r() * 24, fade: 26 + r() * 30, span: 110 + r() * 170, v: o.speed * (.55 + r() * .5)});
+    Object.assign(c, {body: .85, fray: .85, softTop: .18, softBot: .42, strength: .94, bright: .92, deep: .55, relief: 1.1, rise: 24 + r() * 24, fade: 26 + r() * 30, span: 110 + r() * 170, v: o.speed * (.55 + r() * .5)});
   } else {
     // a heaped cloud: lumpy on top and uneven underneath
     w = span;
     up = Math.max(6, w * tall * HD * (.85 + r() * .55)); dn = up * (.3 + r() * .4);
-    Object.assign(c, {body: 1, fray: 1.15, softTop: .07, softBot: .3, strength: 1, bright: 1.02, deep: .78, relief: 1.5, rise: 22 + r() * 24, fade: 24 + r() * 30, span: 90 + r() * 170, v: o.speed * (.65 + r() * .7)});
+    Object.assign(c, {body: 1, fray: .62, softTop: .07, softBot: .3, strength: 1, bright: 1.02, deep: .78, relief: 1.5, rise: 22 + r() * 24, fade: 24 + r() * 30, span: 90 + r() * 170, v: o.speed * (.65 + r() * .7)});
   }
   c.W = Math.min(CLOUD_MAX_W, Math.ceil((w + 12) * HD));
   if (kind !== 'wisp'){
@@ -2596,7 +2772,9 @@ function newCloud(o, r, grown, edge){
   c.H = hgt; c.w = c.W / HD; c.h = c.H / HD;
   // where the bulk of it sits along its length: never a tidy oval
   const prof = c.prof = new Float32Array(c.W), bumps = kind === 'wisp' ? 1 : 3 + Math.floor(r() * 3), lumps = [];
-  for (let i = 0; i < bumps; i++) lumps.push({at: .14 + r() * .72, wide: .17 + r() * .22, high: .55 + r() * .45});
+  for (let i = 0; i < bumps; i++) lumps.push({at: .14 + r() * .72, wide: .13 + r() * .17, high: .55 + r() * .45});
+  // and smaller ones heaped against them, so the top is billows of every size
+  if (kind !== 'wisp') for (let i = 0, n = 3 + Math.floor(r() * 5); i < n; i++) lumps.push({at: .08 + r() * .84, wide: .04 + r() * .08, high: .3 + r() * .42});
   const lean = .6 + r() * .9;
   for (let x = 0; x < c.W; x++){
     const u = (x + .5) / c.W, e = Math.min(1, Math.min(u, 1 - u) * 5), ends = e * e * (3 - 2 * e);
@@ -2604,9 +2782,12 @@ function newCloud(o, r, grown, edge){
       const v = c.flip ? 1 - u : u;
       prof[x] = Math.min(1, Math.pow(v, .55) * Math.pow(1 - v, lean) * 2.6) * ends;
     } else {
+      // it ends in a billow like any other, not drawn out to a point
+      const blunt = Math.sqrt(e * (2 - e));
       let best = 0;
-      for (const L of lumps){ const q = (u - L.at) / L.wide; best = Math.max(best, L.high * Math.exp(-q * q)); }
-      prof[x] = (.3 + Math.min(1, best * 1.2) * .7) * ends;
+      // an arc, which meets its neighbour in a cusp. A bell curve here draws a mountain.
+      for (const L of lumps){ const q = (u - L.at) / L.wide; if (q > -1 && q < 1) best = Math.max(best, L.high * Math.sqrt(1 - q * q)); }
+      prof[x] = (.3 + Math.min(1, best * 1.2) * .7) * blunt;
     }
   }
   c.y = lerp(o.y0, kind === 'wisp' ? lerp(o.y0, o.y1, .7) : o.y1, r()) - c.h * .2;
@@ -2688,28 +2869,44 @@ function cloudShade(c, lut, n, L){
   const {bright, deep, relief, softTop, softBot} = c, softSpan = (c.dn || 8) + 10, veil = c.strength * Math.min(1, c.life * 1.6), slope = L.slope, below = L.below, moon = L.moonX !== undefined, reach = moon ? (L.moonR + 26 * HD) : 0, reach2 = reach * reach;
   for (let row = 0; row < H; row++){
     const y = below ? H - 1 - row : row, step = below ? W : -W, off = Math.round((row + 1) * slope) - Math.round(row * slope), lineD = y * W, out = y * CLOUD_MAX_W;
+    // four rows back toward the light, so the shading follows the billows and not every small lump in them
+    const far = row >= 4 ? 4 * step + Math.round((row + 4) * slope) - Math.round(row * slope) : 0, farOff = far - 4 * step;
     for (let x = 0; x < W; x++){
-      const i = lineD + x, d = D[i], xp = x + off, ip = row > 0 && xp >= 0 && xp < W ? i + step + off : -1;
-      const tp = ip < 0 ? 0 : T[ip], solid = d < 0 ? 0 : d > 1 ? 1 : d;
+      const i = lineD + x, d = D[i], xp = x + off, ip = row > 0 && xp >= 1 && xp < W - 1 ? i + step + off : -1;
+      // spread a little sideways on its way down, or the light draws its own direction across the cloud in streaks
+      const tp = ip < 0 ? 0 : (T[ip - 1] + T[ip] * 2 + T[ip + 1]) / 4, solid = d < 0 ? 0 : d > 1 ? 1 : d;
       T[i] = tp + (solid - tp) * fall;
       if (d <= 0){ u32[out + x] = 0; continue; }
       const dither = BAYER[((y & 3) << 2) | (x & 3)], under = wisp ? 0 : (y - mid[x] + 5) / softSpan, soft = under <= 0 ? softTop : under >= 1 ? softBot : softTop + (softBot - softTop) * under;
       const lev = Math.floor(Math.min(1, d / soft) * veil * 4 + dither + .5);
       if (lev <= 0){ u32[out + x] = 0; continue; }
       // the slope toward the light, a little blurred so the inside rolls rather than looking like rock
-      const soft0 = (D[i - 1] + D[i] * 2 + D[i + 1]) / 4, soft1 = ip < 2 ? -.4 : (D[ip - 1] + D[ip] * 2 + D[ip + 1]) / 4;
+      const jp = far && x + farOff >= 2 && x + farOff < W - 2 ? i + far : -1;
+      const soft0 = (D[i - 1] + D[i] * 2 + D[i + 1]) / 4, soft1 = jp < 2 ? -.4 : (D[jp - 2] + D[jp - 1] + D[jp] * 2 + D[jp + 1] + D[jp + 2]) / 6;
       let lift = soft0 - soft1; if (lift > .4) lift = .4; else if (lift < -.4) lift = -.4;
-      let sh = bright - T[i] * deep + lift * relief * L.relief, gain = L.gain;
+      let sh = bright - T[i] * deep, gain = L.gain;
       if (moon){
         const dx = x - L.moonX, dy = y - L.moonY, q = dx * dx + dy * dy;
         gain -= Math.min(1, Math.abs(dx) / (150 * HD)) * L.far;
-        // right by the moon, the thin edges shine and the thick parts go dark
+        // right by the moon, the thin edges shine and the thick parts go dark, though its billows still show
         if (q < reach2){ const m = 1 - Math.sqrt(q) / reach, back = .22 + Math.max(0, .95 - d * veil * 2.3); sh += (back - sh) * Math.min(1, m * 1.7); }
       }
-      let idx = Math.floor(sh * gain * n + dither * .4);
+      sh += lift * relief * L.relief;
+      let idx = Math.floor(sh * gain * n + dither * .6);
       if (idx < 0) idx = 0; else if (idx >= n) idx = n - 1;
       u32[out + x] = lut[idx * 5 + (lev > 4 ? 4 : lev)];
     }
+  }
+}
+// A cloud in the water is the same cloud upside down, but water doesn't hold a clean edge: a row at a time, each one nudged, with gaps.
+function cloudMirror(c){
+  const M = c.mir ||= document.createElement('canvas');
+  if (M.width !== c.W + 8 || M.height !== c.H){ M.width = c.W + 8; M.height = c.H; }
+  const g = M.getContext('2d');
+  g.clearRect(0, 0, M.width, M.height);
+  for (let j = 0; j < c.H; j++){
+    if (hash2(j, 3, 91) < .3) continue;
+    g.drawImage(c.cv, 0, c.H - 1 - j, c.W, 1, 4 + Math.round(Math.sin(j * .55) * (1 + j * .03) + (hash2(j, 5, 91) - .5) * 2), j, c.W, 1);
   }
 }
 function paintCloud(c, o){
@@ -2723,7 +2920,7 @@ function paintCloud(c, o){
   const M = o.moon || o.sun;
   if (M){
     const dx = M.x - midX, dy = midY - M.y;
-    L = {below: dy < -3, slope: clamp(dx / Math.max(8, Math.abs(dy)), -2.2, 2.2), relief: o.moon ? .55 : .9, gain: o.moon ? .92 : 1, far: o.moon ? .34 : 0, moonX: (M.x - c.x) * HD, moonY: (M.y - c.y) * HD, moonR: M.r * HD};
+    L = {below: dy < -3, slope: clamp(dx / Math.max(8, Math.abs(dy)), -1.1, 1.1), relief: o.moon ? .55 : .9, gain: o.moon ? .92 : 1, far: o.moon ? .34 : 0, moonX: (M.x - c.x) * HD, moonY: (M.y - c.y) * HD, moonR: M.r * HD};
   } else {
     const S = o.light || {};
     L = {below: !!S.under, slope: S.under ? clamp(((S.sunX ?? midX) - midX) / 130, -.7, .7) : -(S.side ?? .08) * 3, relief: S.under ? .55 : 1, gain: S.gain ?? 1};
@@ -2743,6 +2940,7 @@ function paintCloud(c, o){
     }
   }
   c.g.putImageData(B.img, 0, 0, 0, 0, c.W, c.H);
+  if (o.mirror) cloudMirror(c);
   c.next = c.clock + .1 + c.W * c.H / 400000; c.blank = false;
 }
 // Clouds drifting across, each going through its own life: gathering, swelling or thinning, and

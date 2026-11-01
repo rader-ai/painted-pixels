@@ -33,20 +33,21 @@ The feedback that led to this was "no stars or comets, no twinkle or cloud movem
 
 ## Clouds
 
-**A cloud isn't a shape. It's thickness that keeps changing.** Look at `../assets/gallery/clouds.png`, and at `clouds-over-time.png` for how they change.
+**A cloud isn't a shape. It's thickness that keeps changing.** Look at `../assets/gallery/clouds.png`, at `clouds-over-time.png` for how they change, and at `before-clouds.png` for the crumpled paper and the mountains they replaced.
 
 This took a long time to get right, and each version taught us something:
 
 1. **A pile of circles,** each shaded like its own ball: "too many spheres attached together".
 2. **One mass over a flat base,** shaded as a whole. Better, but: "more wispy, less consistent, less full circles, less flat on the bottom. They need to morph and change and dissipate or increase, like clouds do". Anything painted once and moved around can't do that, however good the painting.
-3. **Density, repainted a few times a second.** That's what we have now.
+3. **Density, repainted a few times a second,** with the top drawn as one bell curve and noise strong enough to tear it. They moved and gathered and thinned, and they looked like crumpled paper, or a range of snowy mountains: on the beach, one looked like a mountain so much that its reflection did too.
+4. **The same density, built from billows.** That's what we have now.
 
 **How it works** (`cloudDeck`, `newCloud`, `cloudDensity`, `cloudShade`):
 
-- **Density:** each cloud is a small field of numbers. A rough outline says how much cloud there is where: a lumpy top, an uneven underside and a middle that wanders, so nothing lines up along one row. Then noise is added on top, strongly enough to tear the outline apart.
+- **Density:** each cloud is a small field of numbers. A rough outline says how much cloud there is where: a top of arcs of every size that meet in cusps, an uneven underside and a middle that wanders, so nothing lines up along one row. Then noise is added on top, enough to wave and fray the outline, but not to draw it. It ends in a billow too, not drawn out to a point.
 - **Change:** the noise is two layers sliding through each other in opposite directions, with a third slowly pushing one of them around, which curdles the edge instead of just waving it. No single pattern is ever seen moving, so the cloud seems to boil and reshape rather than scroll.
 - **Its life:** a cloud has an age. Young or dying, it has less density to go round, so only its thickest parts show, and those break into scraps. So it can gather from nothing, swell or thin as its size wanders, and dissolve, while another forms somewhere else. Clouds also drift in from upwind.
-- **Light:** one pass from the light's side, where each pixel takes in how much cloud lies between it and the light. So the bright side is always wherever the light is, on whatever shape the cloud has at that moment. The slope of the density toward the light adds the roll inside it.
+- **Light:** one pass from the light's side, where each pixel takes in how much cloud lies between it and the light, spread a little sideways as it goes. So the bright side is always wherever the light is, on whatever shape the cloud has at that moment. The slope of the density toward the light, measured four rows back, adds the roll of the big billows inside it.
 - **Thin cloud shows sky:** strength is rounded to five levels and dithered, so a wisp's colour blends with whatever sky is behind it.
 
 **The kinds, which share a sky.** Variety is most of what makes a sky look real.
@@ -77,7 +78,7 @@ cloudDeck(k, t, dt, 'forestClouds', {mix: [.2, .3, .4, .1], n: 5, y0: 2, y1: 34,
 - The clouds come from `seed`, and the same seed gives the same sky on every visit. The referee's `--seed` doesn't touch them. If a sky doesn't work, try a few seeds, and check each with `look.mjs probe --expr "LIGHTS.yours.veiled" --n 60 --gap 3`.
 - Cover is sampled at nine points on the source, so it moves in steps of about .11.
 
-**Each cloud is on its own little canvas** (`c.cv`), so a lake can draw it flipped for its reflection, and `cloudShadows` can throw a shadow from the thick ones.
+**Each cloud is on its own little canvas** (`c.cv`), so `cloudShadows` can throw a shadow from the thick ones. With `mirror: true` in `cloudDeck` it keeps a second one too (`c.mir`): the same cloud upside down, a row at a time, each row nudged, with gaps. That's what a lake or a sea draws for its reflection, because water doesn't hold a clean edge.
 
 **Cost:** one repaint is about half a millisecond on a laptop, and only one cloud repaints in any frame: whichever has waited longest. Taking them in list order starved the last ones on a slow phone, and they popped in from nothing when their turn finally came. Empty pixels skip the noise, and everything's read from precomputed tables.
 
@@ -85,6 +86,12 @@ cloudDeck(k, t, dt, 'forestClouds', {mix: [.2, .3, .4, .1], n: 5, y0: 2, y1: 34,
 
 **Traps we fell into on the way:**
 
+- **Crumpled paper:** the noise was folded with a plain `abs`, which makes planes that meet along a ridge, and a lit plane is all one colour. So the inside of every cloud came out in facets. Fold it to domes: `1 - (1 - a) * (1 - a)`, where `a` is the plain fold. Then each billow rolls from light to dark, with a tight crease before the next.
+- **Mountains, the whole time:** a single height over each column is a height map, and that's what a height map looks like. A bell curve for the top made a peak with slopes running down from it, and noise strong enough to tear that made a mountain range. Arcs meet in cusps, which only clouds do. And noise that waves the edge (a `fray` of .6 to .95) leaves those arcs standing.
+- **The light's direction drawn across the cloud:** a low moon carried its shading along a steep diagonal, row by row, and every lump left a streak along it. Keep the slope to about one column a row, and spread what it carries a little sideways.
+- **Every lump shaded the same as every billow:** measuring the slope one row back only sees the finest noise. Four rows back it sees the shapes you can see.
+- **A flat grey patch by the sun:** close to the light, thick cloud was set to one dark value and dithered. Blend toward dark, and put the slope on after, so its billows still show.
+- **Leaves and fish:** a cloud that tapers smoothly to nothing at both ends has a point at each. Use `sqrt(e * (2 - e))`, which ends in a round shoulder.
 - **Long pointed tips and a crease along the middle:** top and bottom met along one straight row. Let the middle wander, and round the density through it.
 - **A straight line along the bottom, again:** two separate causes. Noise pushed density past the edge of the cloud's canvas (so it now drains away before the edge). And the edge softness switched at one row, which hid everything below it on a dark sky (so it now changes gradually, following the wandering middle).
 - **Noise too weak to matter:** scaled by its rare extremes, it hardly moved the outline. Scale it by its spread.

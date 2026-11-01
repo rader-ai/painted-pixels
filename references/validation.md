@@ -91,6 +91,7 @@ The machine can't tell whether the bright side of a tree faces the moon. Those r
 - **Whether it's any good.** It has no taste.
 - **What it didn't run into.** It plays every rare sight and action once, on one seed, from one starting point. In a quick run, it only sees what happened to turn up.
 - **How motion feels.** It knows that something moved and how much, not whether a walk looks stiff.
+- **Safari.** It all runs in Chrome. `look.mjs safari` is a separate check, and it has found a crash that this never could: see `checking.md`.
 - **A real phone.** The phone run is Chrome pretending, at the size of a large iPhone. It doesn't catch Safari's quirks, and its cost number comes from this machine.
 - **Sound.** The beat test fires a beat by hand. It says what reacts, not whether it suits the song.
 
@@ -121,8 +122,9 @@ Each row is a quick look at every world in that version, so there's no long run,
 | `b61438b` | Every cloud gets its turn, and clouds dim what moves | 6 A, 2 B | D7 M3 M5 |
 | `1cafdd4` | What the referee and a test agent found, fixed | 7 A, 1 B | D7 |
 | `12e0c36` | The coffee shop and the office painted again | 8 A | None |
+| `7fec8bb` | The other six: clouds, castle, trees and path, shed, ship and gulls, shore and lily pads | 8 A | None |
 
-A full check of `12e0c36`, on two different seeds, gives Rank A in all eight worlds. None of them has Rank S, because their Eye lists haven't been walked and ticked one by one. Everything before `51503c3` is Rank D for at least one reason, L1, since the light wasn't written down yet. That's why it's worth reading the failure counts as well as the rank.
+A full check of `7fec8bb`, on two different seeds, gives Rank A in all eight worlds. So did `12e0c36`, with clouds like crumpled paper, one window stamped on every tower and a slab for a ship, none of which any check here can see: the rank didn't move, and the worlds did. None of them has Rank S, because their Eye lists haven't been walked and ticked one by one. Everything before `51503c3` is Rank D for at least one reason, L1, since the light wasn't written down yet. That's why it's worth reading the failure counts as well as the rank.
 
 **What people said, and what the referee says about that version:**
 

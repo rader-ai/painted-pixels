@@ -61,14 +61,14 @@ Hi-bit pixel art drawn entirely in code: small pixels, deep colour, and a place 
 
 | World | Family, and accent | Colours | Hue shift | Biggest flat patch | Darkest, brightest | Warm pixels |
 |---|---|---|---|---|---|---|
-| Castle | Violet night, warm windows | 1,538 | 13° | 2.7% | `#07040f`, `#bcabe4` | 2% |
-| Rainy office | Plum and navy, amber lamp | 4,161 | 23° | 2.7% | `#08050b`, `#6e482a` | 34% |
-| Corner booth | Warm brown, blue daylight | 2,456 | 16° | 1.7% | `#12090b`, `#619cd8` | 85% |
-| Garden | Greens and morning blue, gold sun | 659 | 25° | 2.4% | `#0b1514`, `#d3dad8` | 26% |
-| Campfire | Navy, orange fire | 2,516 | 12° | 2.3% | `#020408`, `#3e4c7c` | 12% |
-| Lake | Deep blue, silver moon | 2,185 | 10° | 1.7% | `#040518`, `#2c3b72` | 2% |
-| Park | Greens and sky, pink blossom | 470 | 19° | 2.8% | `#160d14`, `#f4f5f6` | 10% |
-| Beach | Violet sea, gold sun | 1,358 | 26° | 1.7% | `#22143a`, `#fff6fb` | 47% |
+| Castle | Violet night, warm windows | 1,907 | 11° | 2.7% | `#07040f`, `#c0aee8` | 2% |
+| Rainy office | Plum and navy, amber lamp | 3,933 | 23° | 2.7% | `#08050b`, `#6e482a` | 24% |
+| Corner booth | Warm brown, blue daylight | 2,454 | 16° | 1.7% | `#12090b`, `#619cd8` | 80% |
+| Garden | Greens and morning blue, gold sun | 809 | 27° | 2.4% | `#0c1618`, `#d9dae0` | 21% |
+| Campfire | Navy, orange fire | 2,389 | 12° | 2.3% | `#020408`, `#6a7cac` | 10% |
+| Lake | Deep blue, silver moon | 2,457 | 9° | 1.5% | `#02040e`, `#6678a7` | 2% |
+| Park | Greens and sky, pink blossom | 465 | 19° | 2.8% | `#160c12`, `#ffffff` | 8% |
+| Beach | Violet sea, gold sun | 1,708 | 25° | 1.7% | `#22143a`, `#fff6fb` | 41% |
 
 Brightest here means the brightest of the 48 colours covering the most frame, so the real sparks go higher. Notice how little warm there is at night: a few percent of warm is what makes it feel like firelight.
 

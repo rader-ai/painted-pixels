@@ -67,6 +67,8 @@ blit(k, cv, x * HD, y * HD - 9);
 - When a whale starts, the character shades their eyes to watch (`life.next = 'shade'`).
 - The cat comes down from the bookshelf, sits on the keyboard and gets petted.
 
+**A gull a long way off isn't a little bird** (`../assets/gallery/ship-gulls.png`). We shrank the perched bird's sprite and gave it a wing, and it looked like a fish. It's long wings bent at the wrist, and you'd know it anywhere: `gullSprite` draws strokes out from the shoulder, dark toward the tips, with the low sun along the top of the near part of each wing. They glide for a long time, sinking a little, then flap a few times and glide on.
+
 **A little sound-less life everywhere:** `fireflies`, `gardenBugs` (bees that visit flowers, butterflies with slow wingbeats), moths at a lamp, `eyesInTheDark` (two pixels in the undergrowth, blinking, then gone), petals falling, gulls.
 
 **People count too,** at a distance: the jogger, someone with a pram, someone walking a dog (`parkFolk`), figures on the far pavement, the barista.

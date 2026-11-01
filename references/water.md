@@ -4,19 +4,31 @@ Water isn't a colour. It's whatever is above it, moved around a little.
 
 ## Still water
 
-Look at `../assets/gallery/lake.png`.
+Look at `../assets/gallery/lake.png`, and at `before-lake.png` for what a ruled shore looks like.
 
-1. **Paint everything that stands above the water first**, so there's something to reflect. Then `p.reflect(yLine, depth, tint, strength)` mirrors it downward row by row, mixing toward the water's tint and shifting each row sideways by a little for ripple.
+1. **Paint everything that stands above the water first**, so there's something to reflect. Then `p.reflect(yLine, depth, tint, strength)` mirrors it downward row by row, mixing toward the water's tint and shifting each row sideways by a little for ripple. For a shore that isn't straight, which is nearly all of them, do the same a column at a time, about whichever shore is nearest in that column: see below.
 2. Paint the water's own colour first as a `p.sky` gradient (lighter near the far shore), then the reflection over it, then a scatter of faint short horizontal lines.
 3. Remember to cut the bare sky back out with `p.snapshot` and `p.cutTo`, so the real moving sky shows behind.
 
-**Clouds move, so their reflection has to as well:** draw each cloud's canvas (`c.cv`) flipped around the horizon, clipped to the water, with `globalCompositeOperation = 'lighter'` and a low alpha like .1. Plain alpha turned them into dark lumps on the lake. The open sea does this too.
+**The far shore isn't a line.** A row of trees all rooted on one row, with the water starting under them, looks like a ruled edge however good the trees are. In the lake (`LAKE_FAR`, `LAKE_LAND`, `lakeShore`, `lakeLand`):
+
+- The far shore runs in and out in bays, and its bank has a top edge of its own. Our first try left that top on one row, and it showed as a line right across the picture.
+- Nearer land stands in front of it: a wooded point on each side and a small island, with bigger, darker trees and rocks at the waterline. That's what gives you distance over the water.
+- Each one comes out from the far shore and goes back to it gradually, because the mirror line jumps wherever the shore does. An island with a flat edge had a reflection with square corners.
+- A little mist on the far water lifts the near land off it.
+- Keep what the moon's put on the water's edge dim and broken. A continuous bright thread looks like a line someone drew.
+
+**Land and docks go over the water's moving light.** Moon roads, ripples and rain rings are drawn over the water every frame, so paint what stands in it twice: once underneath, to be mirrored, and once in `front`, over all of that. Otherwise ripples run across the dock's posts and rain lands on the trees.
+
+**Clouds move, so their reflection has to as well:** pass `mirror: true` to `cloudDeck` and draw `c.mir`, clipped to the water, with `globalCompositeOperation = 'lighter'` and a low alpha like .1. Plain alpha turned them into dark lumps on the lake, and a clean flipped copy looks like a second sky. The open sea does this too.
 
 **Anything on the water gets a reflection,** starting at its waterline: `mirrorRows(k, cv, X, waterY, alpha, t, n)`. A duck, a boat, the pier. Work out where a reflection would really land first: someone sitting on the dock is high enough above the water that theirs would fall below the frame, so we don't draw one.
 
 **The road of light** under a moon, sun or lamp: a stack of thin horizontal bars straight below the light, each with its own width and a little sideways wobble. It's one of the most satisfying details in a night scene, and it costs almost nothing. The moon's road dims when a cloud covers the moon. On the lake and the beach its width follows the music, which is one of the few places the music is allowed to touch the world, because water doing that looks like shimmer rather than a beat.
 
-**Small life on it:** lily pads (dark ellipses, a lit top, the odd flower), ripples that drift with the wind, reeds at the edge (`reedBed`, `drawReeds`), a fish that jumps and leaves rings (`fishJumps`), ducks, a frog, a heron. Rings are drawn as flat ellipses, a third as tall as wide, because you're looking at the water from low down.
+**Lily pads** (`LAKE_PADS`, `lilyPad`, `drawLilies`) aren't scattered. They grow in colonies where it's shallow, by the reeds and the near shore, smaller and flatter the farther off they are. From low down each one's nearly a line: a notch, a pale far rim that holds the sky, and a dark near edge where it meets the water. At night the buds are closed, and a flower or two has stayed open. They shift a pixel in a gust, and a frog hops to a pad near it, not across the lake.
+
+**Small life on it:** ripples that drift with the wind, reeds at the edge (`reedBed`, `drawReeds`), a fish that jumps and leaves rings (`fishJumps`), ducks, a frog, a heron. Rings are drawn as flat ellipses, a third as tall as wide, because you're looking at the water from low down.
 
 ## The open sea
 

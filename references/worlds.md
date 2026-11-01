@@ -20,7 +20,7 @@ In any other project, steps 1 to 3 are the whole job: call `runPlace(canvas, 'na
 - **Light:** moon on the right at (262, 28); every stone and ridge lit from that side. Warm windows and torches are the accent.
 - **Layers:** sky, stars, clouds; mountains (.04), ridge (.08), keep (.18), mist, wall (1), walker, torches in front. All wrapping.
 - **Moves:** windows lit and put out over minutes, pennants in the wind, flames.
-- **Rare:** dragon crossing the moon, comet, black cat on the wall. Reads while walking.
+- **Rare:** dragon crossing the moon, comet, black cat on the wall, a candle going up a tower's stair, a guard on the bridge with a lantern. Reads while walking.
 
 **Rainy office** (night, plum and navy; the girl at her desk). `gallery/office.png`
 - **Light:** amber lamp, teal monitor, string of bulbs. The moon's only in the window, and the lamp doesn't reach the far side of the room.
@@ -36,8 +36,8 @@ In any other project, steps 1 to 3 are the whole job: call `runPlace(canvas, 'na
 
 **Garden** (morning; the girl on a crate). `gallery/people-life.png`
 - **Light:** sun up on the left. Lawn in shade along the fence.
-- **Layers:** sky, far crowns over the fence, fence and shed, lawn, hedge of roses, lavender, border flowers, sunflowers, vegetable beds, person, birds, bugs, green fronds.
-- **Moves:** everything in the wind, bees, butterflies, birds landing on picket tops.
+- **Layers:** sky, far crowns over the fence, fence, lawn, the shed standing in front of the fence, hedge of roses, lavender, border flowers, sunflowers, vegetable beds, person, birds, bugs, green fronds.
+- **Moves:** everything in the wind, bees, butterflies, birds landing on picket tops, a weathervane on the shed that turns to the wind and shivers in a gust.
 - **Rare:** squirrel along the fence. A butterfly comes to her finger.
 
 **Campfire** (night, navy; the guy on a log). `gallery/light-campfire.png`
@@ -48,12 +48,12 @@ In any other project, steps 1 to 3 are the whole job: call `runPlace(canvas, 'na
 
 **Lake** (night, deep blue; the girl on a dock). `gallery/lake.png`
 - **Light:** moon on the right, its road on the water; one warm lamp at the end of the dock.
-- **Layers:** sky; far hills, a keep with one window, pines, water gradient, reflection, lily pads, dock; `cutTo` to let the sky through. Over that: clouds in the water, the moon's road, ripples, fireflies, reeds.
+- **Layers:** sky; far hills, a keep with one window, the water, the far shore running in and out, its pines, mist, the nearer land, what all that mirrors; `cutTo` to let the sky through. Over that: clouds in the water, the moon's road, ripples. Then `front`, the land again and the dock, so that none of it lands on them. Then lily pads, fireflies, reeds.
 - **Rare:** comet, bats; ducklings, frog, heron. Fishes with a catch and release; skips stones.
 
 **Park** (day; the guy on a bench). `gallery/light-park.png`
-- **Light:** sun high on the right, so shade falls left of each trunk. Clouds drop shadows on the lawn.
-- **Layers:** sky; far hill with observatory and hazy trees; lawn with tree shade, path; edge grass; `front` (trunks, bench, lamp); crowns; flowers; petals; birds; person; strollers; near grass; plum fronds.
+- **Light:** sun high on the right, so shade falls away from it on either side. Clouds drop shadows on the lawn.
+- **Layers:** sky; far hill with observatory, hazy trees, a row of far poplars and a thread of footpath; lawn with tree shade; the path, and the footpath off it; edge grass; `front` (trunks, bench, lamp); crowns of four kinds of tree; flowers; petals; birds; person; strollers, on the path wherever it's got to; near grass; plum fronds.
 - **Moves:** wind, falling petals, flowers along the front that grow with the music.
 - **Rare:** kite, lost balloon, squirrel. Feeds pigeons, and they come to the crumbs.
 

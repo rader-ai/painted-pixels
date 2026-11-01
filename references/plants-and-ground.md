@@ -6,7 +6,7 @@ Everything here is built from small things that each catch the light: a crown fr
 
 **A crown is a mass of leaf clumps held up by real limbs. Not balls on a stick.**
 
-Look at `../assets/gallery/tree-crowns.png` next to `../assets/gallery/before-trees.png`. The feedback on the early version: "the trees just look like balls/spheres connected... they don't feel like they are coming from one source."
+Look at `../assets/gallery/tree-kinds.png` and `tree-crowns.png` next to `../assets/gallery/before-trees.png` and `before-park.png`. The feedback on the early version: "the trees just look like balls/spheres connected... they don't feel like they are coming from one source."
 
 - **Leaves:** each clump (`leafClump`) is a pile of small leaves, and each leaf is lit on its own. So sunlit clumps glitter with lime highlights over dark seams, and the shaded side settles into deep teal.
 - **One form:** clumps on the sunny side of the crown are a touch brighter and those on the far side darker (`shadeClumps`), so the crown reads as one lit shape.
@@ -30,7 +30,20 @@ const BARK_NIGHT = ['#06080e', '#0c1018', '#141a26', '#1e2838', '#2e3c52'].map(r
 for (const part of [...tree.branches, ...tree.roots, tree.trunk]) stroke(p, part, BARK_NIGHT, -1);
 ```
 
-**Relatives:** `bushModel` (a low crown on the ground), `hedgeModel` (a back and front row, with `blooms` for roses), `p.leaves` (a patch that doesn't sway, for ivy), `p.strands` (hanging vines).
+**A park with one kind of tree is a pattern.** Ours had four trees from one template: the same Y of a trunk with the same balls on it, one of them pink. `kind` in `treeModel` grows each its own way (`TREE_KINDS`), and each stands somewhere different:
+
+| `kind` | How it grows | What it says |
+|---|---|---|
+| `oak` | Short and enormously thick. It forks low into heavy limbs that go out more than up | Old, close by, and it can hold the corner of a frame |
+| `cherry` | Forks low and opens like a vase, with blossom in flat layers along each limb and dark gaps between them | The one thing in flower |
+| `birch` | Slim white stems out of one root, with black marks, and a light narrow crown of small leaves | Farther off, and it lets the hill show through |
+| `poplar` | A tall flame with its limbs held in. No crown to speak of, only a shape | The one vertical in a scene of round things. Far away, a row of them is a boundary somebody planted |
+
+Palettes go with them: `PAL_OAK`, `PAL_BIRCH`, `PAL_POPLAR`. Don't forget `sun`: a tree past the sun is lit from the other side, and its shade falls the other way.
+
+**Cost:** a big tree is a few hundred clumps. `drawClumps` paints each neighbourhood of them once into a sprite of its own, and moves those with the wind, which took the park from 7 ms to under 3.
+
+**Relatives:** `bushModel` (a low crown on the ground), `hedgeModel` (a back and front row, with `blooms` for roses), `p.leaves` (a patch that doesn't sway), `p.strands` (hanging vines), `ivyClimb` (ivy and climbing roses, rooted at the foot of a wall: see `built-things.md`).
 
 **Far trees:** `paintFarTrees(p, x0, x1, base, PAL_FAR, seed, sun)`. Mounds and a few taller stacks, in a hazy colour close to the sky, painted into the background. They don't sway. Nothing that far away visibly moves.
 
@@ -75,7 +88,8 @@ A garden also wants tall things that aren't flowers on a stem: sunflowers on lon
 
 - `p.soil`: a dark bed scattered with lit clods and the odd pebble. Not noise.
 - `p.hill(fn, cols, seed, {rim, depth, rough, blades, sunX})`: a ridge. `fn(x)` is its height. Keep these functions around, so what stands on the hill can use them too.
-- A **path** is a texture with a lighter worn stretch down the middle and a darker lip where the grass meets it, plus some speckle. Grass hangs over its near edge.
+- A **path** goes somewhere. A straight strip across the frame with a ruled edge is a stripe, however it's textured. Ours comes in close by us on the left, passes the bench, and goes away up the slope to the right, narrowing as it goes, and it takes whoever's walking with it (`PARK_PATH`). A footpath leaves it, winds up over the hill, dips out of sight, and turns up again on the far slope as a thread, at the observatory's door. Nothing else in that scene gives you as much distance.
+- Its surface: lighter down the middle where people walk, faint ruts, darker where the grass meets it, an edge moved by noise, grit that's lit on one side, and what's fallen from the trees over it. Grass comes over both edges.
 - **Stones** are two ellipses plus a highlight, with a flat dark shadow under them.
 
 ## Snow

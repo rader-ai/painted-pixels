@@ -2,7 +2,7 @@
 
 Natural things are made of many small things. Built things are made of courses, planks and panes: regular shapes that time has got at. Paint the regularity first, then break it.
 
-Look at `../assets/gallery/castle.png`, `office.png` and `cafe.png`.
+Look at `../assets/gallery/castle.png`, `shed.png`, `office.png` and `cafe.png`, and at `before-castle.png` and `before-shed.png` for what they replaced.
 
 ## Materials
 
@@ -14,7 +14,7 @@ Look at `../assets/gallery/castle.png`, `office.png` and `cafe.png`.
 | Plaster, floors, walls | Quiet noise from a close ramp, or the room feels busy | `p.texture(x, y, w, h, ramp, scale, seed, bias)` |
 | Fabric | Sine folds down its length | `p.curtain` |
 | Round roofs, lampshades | Shade across the dome | `p.dome` |
-| Moss, ivy, cracks | Added last, where water would run | `p.leaves`, `p.strands` |
+| Moss, ivy, cracks | Added last, where water would run | `ivyClimb`, `p.strands` |
 
 **Which way bevels face:** `p.box`, `p.wood` and `p.dome` light the top and left edges, unless you set `p.sun = 1` first, for a light on the right. Follow the line from the light to check. Our bench, lamp and observatory were lit from the wrong side for a long time.
 
@@ -44,6 +44,28 @@ The street outside the coffee shop is the opposite of a city at night: close up,
 - **One lens.** Lay the blocks out in rows on the ground, project them with a small perspective function (`x = horizonX + (wx - horizonX) * scale`, with `scale` shrinking with distance), and paint their faces and roofs from that. It's painted once, so it costs nothing per frame. An avenue running straight out to the horizon gives you more depth than anything else you can draw.
 - **Air.** Far buildings turn toward the sky behind them, and their windows shrink to dots.
 - **Mostly asleep.** Whole floors are lit together, most buildings are nearly dark, and a few windows are blue like a TV. Evenly scattered lights look like a pattern.
+
+## A castle
+
+Ours had a grid of the same window stamped on every tower, patches of ivy floating on the walls, a bridge held up by a thin line, and a torch every 96 pixels. It takes four questions to get out of that:
+
+- **Who'd cut a window there?** Nobody cuts one low down in a tower that might be attacked. So the real windows are at the top, in the chamber where someone lives, with a hood and a sill and what the rain's washed down from it since. Lower down it's solid, with a slit or two. Each tower gets its own plan, by hand.
+- **How do you get up it?** A spiral stair lets light in through slits, so they climb across the tower in a diagonal and go out of sight round the back (`stair`). An opening's place on a round tower depends on how far round it's cut, and past a certain angle it's only a sliver. It's the detail that says the tower's round, and it gives you a rare sight for nothing: somebody going up with a candle, one slit after another.
+- **What's holding it up?** A bridge between towers needs a thick ring of cut stones standing on end, their joints pointing at the middle of the arch, solid masonry over it, and the underside of the arch showing, because it's as deep as the wall (`bridge`). The gate's the same, with the portcullis down and a fire in the passage behind it.
+- **Where does it start?** Ivy roots at the foot of a wall and climbs, its stems forking and thinning out, its leaves following them, thickest low down, going round the glass (`ivyClimb`). Stems that spread too wide look like a dead tree, and leaves with no stem look like what we had.
+
+A chapel window's the place for colour: leaded glass in tall lancets under the rose, always lit, kept a little below full strength so it doesn't take over from the person.
+
+Torches are placed, not spaced: two either side of a door in the wall, the others where you'd need one, and one bracket with nothing in it and its soot still on the wall. Whatever reads from them, like whichever one lights the walker, reads the same list.
+
+## Sheds, and anything else you can walk round
+
+A front-on rectangle with a triangle on it has no inside. `gardenShed` is one vanishing point and three surfaces:
+
+- **Turn it a little.** The front stays square to us, and one side runs off toward the same point everything else does (`x + (vx - x) * t`). That side wall is only 12 of its 68 units of width, and that's enough.
+- **Then light the three surfaces differently.** The sun's behind it and to the left: the side wall's bright, the near slope of the roof catches everything, and the front's in its own shade with the sky's cool light on it. That difference does more than any detail.
+- **Then make it the thing.** Shingles in rows, each its own. Boards and battens. A door in another colour, with a ledge and brace, strap hinges, paint gone from the bottom of it. A window that shows the sky behind us at the top and the dark inside lower down. A barrel under the downpipe, a climbing rose up the sunny corner, pots stacked by somebody who means to use them again. Stepping stones that go to the door.
+- **Then check what passes it.** The grass along the foot of the fence would grow straight up its wall, now that it stands in front of the fence, and the squirrel on the fence had been running across the old one for days. Filter the one, and clip the other, so that it goes behind.
 
 ## Nothing's a box
 

@@ -91,11 +91,20 @@ You can't watch a video here, so judge motion from strips, and be honest that th
 - [ ] Reduced motion looks right as a still: `look.mjs shot --reduced`.
 - [ ] Rain on, if it's outdoors: `--rain`.
 - [ ] Phone size checked.
+- [ ] `look.mjs safari` has run, after your last change.
 - [ ] In Lofi Studio, the same scene as album cover art (`look.mjs cover --coverx 96`): `k.live` is false there, and a cover's a square crop.
 
 ## Safari
 
-Plenty of people will open this on an iPhone. A page that's fine in Chrome is usually fine in Safari here, but check a real page load in WebKit when something's changed about the runtime rather than the art. Playwright's WebKit needs the copy of `playwright-core` that matches the installed browser. If you can't test on a real iPhone, say so.
+Plenty of people will open this on an iPhone, and the referee only runs in Chrome. Run this before you publish anything, art included:
+
+```bash
+node scripts/look.mjs safari --page path/to/page.html
+```
+
+It runs each world for 40 seconds in Safari's engine, then again with reduced motion, and says if the tab crashed. Our rule used to be that art can't break Safari, so only check it when the runtime changes. Then a repaint of the garden brought the whole tab down, every time, about ten frames after you got there, with no error and nothing wrong in Chrome. The compiler that takes over after those ten frames was choking on the world's draw function. A plain counted loop in place of `for (const [i, x] of list.entries())` was enough to stop it, and removing a different loop stopped it too, so it's not that the pattern's wrong: it's that the function was the wrong shape for that compiler, and nothing but running it will tell you. That's why it runs for a while: a short look would pass.
+
+Playwright's WebKit has to match the `playwright-core` that drives it. If the command says it isn't installed, it says how. If you can't test on a real iPhone, say so.
 
 ## In Lofi Studio
 

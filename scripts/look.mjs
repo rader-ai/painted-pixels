@@ -16,6 +16,8 @@
 //                                                                            run: do things end, and do the caches stop growing?
 //   node look.mjs poses  [--page f] [--spec poses.json] [--zoom 5] --out a.png   the rig, big
 //   node look.mjs walk   [--page f] [--gait walk|jog] [--n 16] --out a.png   one walk cycle, against ground marks
+//   node look.mjs safari [--page f] [--place forest] [--seconds 40]          every world in Safari's engine, for long enough to
+//                                                                            find out whether it brings the tab down
 //
 // common: --page file.html   the page to open (default: the nearest index.html going up from where you are)
 //         --place forest     which of PLACES to show (default: whatever the page shows; for perf, all)
@@ -44,7 +46,7 @@ for (let i = 0; i < rest.length; i++){
   const name = rest[i].slice(2), next = rest[i + 1];
   opt[name] = next === undefined || next.startsWith('--') ? true : (i++, next);
 }
-if (!cmd || !['shot', 'strip', 'clip', 'probe', 'perf', 'phone', 'cover', 'soak', 'poses', 'walk'].includes(cmd)){
+if (!cmd || !['shot', 'strip', 'clip', 'probe', 'perf', 'phone', 'cover', 'soak', 'poses', 'walk', 'safari'].includes(cmd)){
   console.log(`Usage: the top of ${fileURLToPath(import.meta.url)} lists every command.`);
   process.exit(cmd ? 1 : 0);
 }
@@ -149,6 +151,45 @@ async function open(extra = {}){
   }
   await page.waitForTimeout(300);
   return {page, errors, done: async () => { await browser.close(); server.close(); }};
+}
+// A page that's fine in Chrome can bring down the whole tab in Safari, and only after it's been running for a moment, once a
+// faster compiler gets to the code. So this runs on the real clock, in real frames, for a while: each world in turn, in WebKit.
+if (cmd === 'safari'){
+  const { webkit } = await import('playwright-core');
+  const file = findPage(), server = await serve(dirname(file)), secs = +(opt.seconds || 40);
+  const browser = await webkit.launch().catch(() => null);
+  if (!browser){
+    console.log(`Safari's engine isn't installed for this copy of Playwright. Run this in ${dirname(fileURLToPath(import.meta.url))}, then try again:\n  npx playwright install webkit`);
+    server.close(); process.exit(1);
+  }
+  let bad = false;
+  for (const reduced of [false, true]){
+    const context = await browser.newContext({viewport: {width: 440, height: 852}, reducedMotion: reduced ? 'reduce' : 'no-preference'});
+    const page = await context.newPage(), errors = [];
+    let crashed = false;
+    page.on('pageerror', e => errors.push(e.message)); page.on('crash', () => { crashed = true; });
+    await page.goto(`http://127.0.0.1:${server.address().port}/${basename(file)}`);
+    for (let waited = 0; waited < 60000 && await page.evaluate(() => !!document.getElementById('splash')).catch(() => false); waited += 250) await page.waitForTimeout(250);
+    const places = opt.place ? [opt.place] : await page.evaluate(() => typeof PLACES !== 'undefined' && typeof activeSceneId !== 'undefined' ? Object.keys(PLACES) : [null]);
+    for (const place of places){
+      const frames = await page.evaluate(async ([place, ms]) => {
+        if (place) activeSceneId = () => place;
+        let n = 0, done = false;
+        const count = () => { n++; if (!done) requestAnimationFrame(count); };
+        requestAnimationFrame(count);
+        await new Promise(d => setTimeout(d, ms));
+        done = true;
+        return n;
+      }, [place, (reduced ? .25 : 1) * secs * 1000]).catch(() => null);
+      console.log(`${reduced ? 'reduced motion' : 'normal'}  ${place || 'the page'}: ${crashed ? 'THE TAB CRASHED' : frames === null ? 'stopped answering' : `${frames} frames`}`);
+      if (crashed || frames === null){ bad = true; break; }
+    }
+    if (errors.length){ bad = true; console.log('PAGE ERRORS:'); for (const e of [...new Set(errors)]) console.log('  ' + e); }
+    await context.close().catch(() => {});
+  }
+  await browser.close().catch(() => {}); server.close();
+  console.log(bad ? 'Safari has a problem with this.' : "Safari's engine ran all of it. A real iPhone can still differ.");
+  process.exit(bad ? 1 : 0);
 }
 const save = (path, b64) => writeFile(path, Buffer.from(b64, 'base64'));
 const report = errors => { if (errors.length){ console.log('PAGE ERRORS:'); for (const e of [...new Set(errors)]) console.log('  ' + e); process.exitCode = 1; } };

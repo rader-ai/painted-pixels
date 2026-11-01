@@ -29,6 +29,7 @@ wait
 
 # plants
 L shot --place park   --at 6 --crop 430,40,210,190 --zoom 4 --out "$OUT/tree-crowns.png" &
+L shot --place park   --at 6 --crop 0,100,640,180  --zoom 2 --out "$OUT/tree-kinds.png" &
 L shot --place forest --at 6 --crop 0,100,320,140  --zoom 4 --out "$TMP/pine-left.png" &
 L shot --place forest --at 6 --crop 320,100,320,140 --zoom 4 --out "$TMP/pine-right.png" &
 L shot --place park   --at 6 --crop 0,200,320,100  --zoom 4 --out "$OUT/grass-flowers.png" &
@@ -38,7 +39,7 @@ stack "$OUT/pines-moonlit.png" "$TMP/pine-left.png" "$TMP/pine-right.png"
 
 # sky
 L shot --place beach  --at 2 --crop 380,10,260,85 --zoom 3 --out "$TMP/cloud-sunset.png" &
-L shot --place park   --at 8 --crop 40,60,320,85   --zoom 3 --out "$TMP/cloud-day.png" &
+L shot --place garden --at 8 --crop 0,0,420,100  --zoom 3 --out "$TMP/cloud-day.png" &
 L shot --place forest --at 8 --crop 0,0,420,110  --zoom 3 --out "$TMP/cloud-moon.png" &
 wait
 stack "$OUT/clouds.png" "$TMP/cloud-moon.png" "$TMP/cloud-sunset.png" "$TMP/cloud-day.png"
@@ -52,6 +53,7 @@ stack "$OUT/clouds-over-time.png" "$TMP/time-day.png" "$TMP/time-sunset.png" "$T
 L strip --place beach --at 6 --n 6 --gap 1.2 --crop 0,180,640,90 --zoom 1 --out "$OUT/surf-over-time.png" &
 L shot  --place beach --at 6 --crop 340,195,280,65 --zoom 4 --out "$OUT/surf-close.png" &
 L shot  --place lake  --at 6 --crop 200,120,440,180 --zoom 3 --out "$OUT/lake.png" &
+L shot  --place beach --at 6 --crop 400,30,240,140 --zoom 3 --out "$OUT/ship-gulls.png" &
 wait
 
 # fire
@@ -60,7 +62,8 @@ L strip --place forest --at 3 --act smoreFire --n 12 --gap 1.75 --crop 290,170,1
 wait
 
 # things people built
-L shot --place castle --at 6 --crop 200,120,300,180 --zoom 3 --out "$OUT/castle.png" &
+L shot --place castle --at 6 --crop 30,30,500,250 --zoom 2 --out "$OUT/castle.png" &
+L shot --place garden --at 6 --crop 470,60,170,180 --zoom 4 --out "$OUT/shed.png" &
 L shot --place office --at 6 --crop 40,0,600,300    --zoom 2 --out "$OUT/office.png" &
 L shot --place cafe   --at 6 --zoom 2 --out "$OUT/cafe.png" &
 wait

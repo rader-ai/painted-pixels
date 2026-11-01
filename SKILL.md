@@ -77,13 +77,13 @@ Then the next element. Don't move on from something that's merely fine.
 | How we talk | `references/voice.md` | |
 | Composition, pixels, ramps, dither, outlines, a place's colours | `references/look.md` | `tree-crowns`, `light-park` |
 | **Light: where it comes from, how it behaves, what reflects it, what it does to moving things** | `references/light.md` | `light-campfire`, `light-park`, `light-beach-shadows`, `light-torch-walker`, `light-fox-firelight`, `before-campfire` |
-| Gradient, stars, moon, clouds, rain | `references/sky.md` | `clouds`, `clouds-over-time`, `light-campfire` |
-| Trees, pines, grass, flowers, earth, snow, mountains, sand | `references/plants-and-ground.md` | `tree-crowns`, `pines-moonlit`, `grass-flowers`, `dune-grass`, `before-trees`, `example-cabin` |
-| Lakes, reflections, sea, surf | `references/water.md` | `lake`, `surf-close`, `surf-over-time`, `before-beach` |
-| Stone, wood, windows, rooms, fire, flags, smoke | `references/built-things.md` | `castle`, `office`, `cafe`, `campfire` |
+| Gradient, stars, moon, clouds, rain | `references/sky.md` | `clouds`, `clouds-over-time`, `light-campfire`, `before-clouds` |
+| Trees, pines, grass, flowers, earth, snow, mountains, sand | `references/plants-and-ground.md` | `tree-kinds`, `tree-crowns`, `pines-moonlit`, `grass-flowers`, `dune-grass`, `before-trees`, `example-cabin` |
+| Lakes, shores, reflections, sea, surf | `references/water.md` | `lake`, `surf-close`, `surf-over-time`, `before-lake`, `before-beach` |
+| Stone, wood, windows, castles, sheds, rooms, fire, flags, smoke | `references/built-things.md` | `castle`, `shed`, `office`, `cafe`, `campfire`, `before-castle`, `before-shed` |
 | Layers, walking, wind, timing, the music rule, cost | `references/depth-and-motion.md` | |
 | The rig, faces, the walk, actions, props | `references/people.md` | `people-poses`, `people-walk`, `people-life`, `marshmallow` |
-| Animals, behaviour, rare sights | `references/creatures.md` | `whale`, `fox`, `crab`, `birds-park` |
+| Animals, behaviour, rare sights | `references/creatures.md` | `whale`, `fox`, `crab`, `birds-park`, `ship-gulls` |
 | Looking up close, strips, phone, cost, the tools | `references/checking.md` | |
 | Everything that's gone wrong before | `references/mistakes.md` | `before-*` |
 | Each world as a worked example, adding a world | `references/worlds.md` | |
@@ -109,6 +109,8 @@ The short version. The rule book has all of it, and it's what your work gets che
 | Make rare things rare, one at a time, from a shuffled bag | So that seeing one feels like luck |
 | Seed everything painted once; use `Math.random` only for live behaviour | Same place every visit |
 | Give built things a form, with `p.form`, and make them the real thing | "Everything is ugly squares": a box with a colour in it isn't anything yet |
+| Place things for a reason, not with a `for` loop | Windows, torches and ivy spaced by one number look stamped, however well each is drawn. Ask who'd put it there |
+| Give a place more than one kind of anything | Four trees from one template is a pattern. An oak, a birch, a cherry and a poplar is a park |
 | Paint a room as its own layer with its window cut out, and draw the outside first | Or the rain falls through the TV, and the bus drives through the booth |
 | Keep the subject readable: plain contrast behind them, quiet next to busy | The scene's a small rectangle on a phone, and people glance at it |
 | Paint once what doesn't move; cache sprites; stay under 5 ms a frame | It has to keep up on a phone, with music playing |
@@ -116,11 +118,12 @@ The short version. The rule book has all of it, and it's what your work gets che
 
 ## Finishing
 
-It isn't finished until the referee's seen it.
+It isn't finished until the referee's seen it, and Safari's engine has run it.
 
-1. **Run the referee:** `node path/to/this/skill/scripts/validate.mjs --page your-page.html`, after `npm install` once in `scripts/`. A full check takes about three and a half minutes, and `--quick` takes a few seconds while you're painting. It writes a status screen, an inspection sheet and a list of what to look at into a `quest` folder next to the page. Inside Lofi Studio, add `--place forest`.
+1. **Run the referee:** `node path/to/this/skill/scripts/validate.mjs --page your-page.html`, after `npm install` once in `scripts/`. A full check takes a few minutes, and `--quick` takes a few seconds while you're painting. It writes a status screen, an inspection sheet and a list of what to look at into a `quest` folder next to the page. Inside Lofi Studio, add `--place forest`.
 2. **Fix every Law.** Fix every Custom too, unless you're breaking it on purpose, in which case say so on the page and it's excused (see `references/validation.md`).
 3. **Walk the Eye list.** The machine can't judge these. Open `quest/sheet.png` with the Read tool, film what needs filming, and tick each rule off in `quest/eye.md` with a note saying what you saw. Only tick what you've really looked at. If a rule can't apply here, tick it and say why, as in "nobody walks in this scene". Run the referee again.
-4. **Report back:** the rank, what you made, the calls you made, any Custom you broke and why, how you checked it, and what you couldn't check. You can't watch motion here: you judged it from frame strips, so say so, and say what's most likely to need tuning. If the person can see files, show them `quest/status.png`.
+4. **Run it in Safari's engine:** `node path/to/this/skill/scripts/look.mjs safari --page your-page.html`. The referee runs in Chrome, and a page it gives Rank S can still bring down a tab on an iPhone. It's happened to us.
+5. **Report back:** the rank, what you made, the calls you made, any Custom you broke and why, how you checked it, and what you couldn't check. You can't watch motion here: you judged it from frame strips, so say so, and say what's most likely to need tuning. If the person can see files, show them `quest/status.png`.
 
 Rank S means the machine has no complaints and every Eye rule has been walked. It doesn't mean it's beautiful. Only somebody looking at it can tell you that.
